@@ -2,50 +2,50 @@ import { TOTPOptions } from "./types/";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
-  step = this.defaults.step;
+  duration = this.defaults.duration;
   digits = this.defaults.digits;
   window = this.defaults.window;
-  epoch = this.defaults.epoch;
+  timestamp = this.defaults.timestamp;
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
-    step = this.defaults.step,
+    duration = this.defaults.duration,
     digits = this.defaults.digits,
   }: Partial<TOTPOptions> = {}) {
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;
-    this.step = step;
+    this.duration = duration;
   }
 
   get defaults(): Readonly<TOTPOptions> {
     return Object.freeze<TOTPOptions>({
       algorithm: "sha1",
-      step: 30,
+      duration: 30,
       digits: 6,
       window: 1,
-      epoch: Date.now(),
+      timestamp: Date.now(),
     });
   }
 
   generate({
     secretKey,
-    epoch = Date.now(),
-    step = this.step || this.defaults.step,
+    timestamp = Date.now(),
+    duration = this.duration || this.defaults.duration,
   }: {
-    epoch: number;
+    timestamp: number;
     secretKey: string;
-    step?: number;
+    duration?: number;
   }) {}
 
   validate({
     token,
     secret,
-    epoch = Date.now(),
-    step = this.step || this.defaults.step,
+    timestamp = Date.now(),
+    duration = this.duration || this.defaults.duration,
   }: {
-    step: number;
-    epoch: number;
+    duration: number;
+    timestamp: number;
     secret: string;
     token: string;
   }) {}
@@ -53,11 +53,11 @@ class TOTP {
   verifyDelta({
     token,
     secret,
-    epoch = Date.now(),
-    step = this.step || this.defaults.step,
+    timestamp = Date.now(),
+    duration = this.duration || this.defaults.duration,
   }: {
-    step: number;
-    epoch: number;
+    duration: number;
+    timestamp: number;
     secret: string;
     token: string;
   }) {}

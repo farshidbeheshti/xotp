@@ -1,7 +1,7 @@
 export type TOTPOptions = {
   algorithm: "sha1" | "sha256" | "sha512";
-  step: number;
+  duration: number;
   digits: number;
   window: number;
-  epoch: number;
+  timestamp: number;
 };
