@@ -31,13 +31,13 @@ class HOTP {
   }
 
   generate({
-    secretKey,
+    secret,
     counter = this.counter++,
   }: {
-    secretKey: string;
+    secret: string;
     counter?: number;
   }) {
-    const digest = createHmac(this.algorithm, Buffer.from(secretKey))
+    const digest = createHmac(this.algorithm, Buffer.from(secret))
       .update(uintEncode(counter))
       .digest();
 
