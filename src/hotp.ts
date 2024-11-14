@@ -1,4 +1,7 @@
+import { createHmac } from "node:crypto";
 import { HOTPOptions } from "./types";
+import { uintEncode } from "./encoding";
+import { padStart } from "./utils";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -28,12 +31,25 @@ class HOTP {
   }
 
   generate({
-    secretKey,
+    secret,
     counter = this.counter++,
   }: {
-    secretKey: string;
+    secret: string;
     counter?: number;
-  }) {}
+  }) {
+    const digest = createHmac(this.algorithm, Buffer.from(secret))
+      .update(uintEncode(counter))
+      .digest();
+
+    const offset = digest[digest.byteLength - 1] & 0xf;
+    const truncatedBinary =
+      ((digest[offset] & 0x7f) << 24) |
+      ((digest[offset + 1] & 0xff) << 16) |
+      ((digest[offset + 2] & 0xff) << 8) |
+      (digest[offset + 3] & 0xff);
+    const token = truncatedBinary % 10 ** this.digits;
+    return padStart(`${token}`, this.digits, "0");
+  }
 
   validate({
     token,
