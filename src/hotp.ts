@@ -63,7 +63,7 @@ class HOTP {
     window?: number;
   }): boolean {
     return (
-      this.validationDelta({
+      this.compare({
         token,
         secret,
         counter,
@@ -72,7 +72,7 @@ class HOTP {
     );
   }
 
-  validationDelta({
+  compare({
     token,
     secret,
     counter = this.counter,
@@ -83,17 +83,15 @@ class HOTP {
     counter?: number;
     window?: number;
   }): number | null {
-    if (this.verifyEquality({ token, secret, counter })) return 0;
+    if (this.equals({ token, secret, counter })) return 0;
     for (let i = 1; i <= window; i++) {
-      if (this.verifyEquality({ token, secret, counter: counter + i }))
-        return i;
-      if (this.verifyEquality({ token, secret, counter: counter - i }))
-        return -i;
+      if (this.equals({ token, secret, counter: counter + i })) return i;
+      if (this.equals({ token, secret, counter: counter - i })) return -i;
     }
     return null;
   }
 
-  verifyEquality({
+  equals({
     token,
     secret,
     counter = this.counter,
