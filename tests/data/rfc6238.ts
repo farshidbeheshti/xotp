@@ -56,141 +56,137 @@ export const duration = 30;
 export const data: {
   timestamp: number; // Time in sec
   utc: string; // UTC time
-  steps: number; // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
+  steps: number; // Calculated by utc / timeStep, the number of time steps since the Unix epoch in hex.
   totp: string; // TOTP token
-  mode: "sha1" | "sha256" | "sha512";
+  mode: "sha1" | "sha256" | "sha512"; // The hashing algorithm
 }[] = [
   {
-    timestamp: 59, // Time in sec
-    utc: "1970-01-01 000:00:59", // UTC time
-    steps: 0x0000000000000001, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "94287082", // TOTP token
-    mode: "sha1", // The hashing algorithm
+    timestamp: 59,
+    utc: "1970-01-01 000:00:59",
+    steps: 0x0000000000000001,
+    totp: "94287082",
+    mode: "sha1",
   },
   {
-    timestamp: 59, // Time in sec
-    utc: "1970-01-01 000:00:59", // UTC time
-    steps: 0x0000000000000001, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "46119246", // TOTP token
-    mode: "sha256", // The hashing algorithm
+    timestamp: 59,
+    utc: "1970-01-01 000:00:59",
+    steps: 0x0000000000000001,
+    totp: "46119246",
+    mode: "sha256",
   },
   {
-    timestamp: 59, // Time in sec
-    utc: "1970-01-01 000:00:59", // UTC time
-    steps: 0x0000000000000001, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "90693936", // TOTP token
-    mode: "sha512", // The hashing algorithm
-  },
-
-  {
-    timestamp: 1111111109, // Time in sec
-    utc: "2005-03-18 01:58:29", // UTC time
-    steps: 0x00000000023523ec, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "07081804", // TOTP token
-    mode: "sha1", // The hashing algorithm
-  },
-  {
-    timestamp: 1111111109, // Time in sec
-    utc: "2005-03-18 01:58:29", // UTC time
-    steps: 0x00000000023523ec, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "68084774", // TOTP token
-    mode: "sha256", // The hashing algorithm
-  },
-  {
-    timestamp: 1111111109, // Time in sec
-    utc: "2005-03-18 01:58:29", // UTC time
-    steps: 0x00000000023523ec, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "25091201", // TOTP token
-    mode: "sha512", // The hashing algorithm
+    timestamp: 59,
+    utc: "1970-01-01 000:00:59",
+    steps: 0x0000000000000001,
+    totp: "90693936",
+    mode: "sha512",
   },
 
   {
-    timestamp: 1111111111, // Time in sec
-    utc: "2005-03-18 01:58:31", // UTC time
-    steps: 0x00000000023523ed, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "14050471", // TOTP token
-    mode: "sha1", // The hashing algorithm
+    timestamp: 1111111109,
+    utc: "2005-03-18 01:58:29",
+    steps: 0x00000000023523ec,
+    totp: "07081804",
+    mode: "sha1",
   },
   {
-    timestamp: 1111111111, // Time in sec
-    utc: "2005-03-18 01:58:31", // UTC time
-    steps: 0x00000000023523ed, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "67062674", // TOTP token
-    mode: "sha256", // The hashing algorithm
+    timestamp: 1111111109,
+    utc: "2005-03-18 01:58:29",
+    steps: 0x00000000023523ec,
+    totp: "68084774",
+    mode: "sha256",
   },
   {
-    timestamp: 1111111111, // Time in sec
-    utc: "2005-03-18 01:58:31", // UTC time
-    steps: 0x00000000023523ed, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "99943326", // TOTP token
-    mode: "sha512", // The hashing algorithm
+    timestamp: 1111111109,
+    utc: "2005-03-18 01:58:29",
+    steps: 0x00000000023523ec,
+    totp: "25091201",
+    mode: "sha512",
+  },
+
+  {
+    timestamp: 1111111111,
+    utc: "2005-03-18 01:58:31",
+    steps: 0x00000000023523ed,
+    totp: "14050471",
+    mode: "sha1",
+  },
+  {
+    timestamp: 1111111111,
+    utc: "2005-03-18 01:58:31",
+    steps: 0x00000000023523ed,
+    totp: "67062674",
+    mode: "sha256",
+  },
+  {
+    timestamp: 1111111111,
+    utc: "2005-03-18 01:58:31",
+    steps: 0x00000000023523ed,
+    totp: "99943326",
+    mode: "sha512",
   },
 
   {
-    timestamp: 1234567890, // Time in sec
-    utc: "2009-02-13 23:31:30", // UTC time
-    steps: 0x000000000273ef07, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "89005924", // TOTP token
-    mode: "sha1", // The hashing algorithm
+    timestamp: 1234567890,
+    utc: "2009-02-13 23:31:30",
+    steps: 0x000000000273ef07,
+    totp: "89005924",
+    mode: "sha1",
   },
   {
-    timestamp: 1234567890, // Time in sec
-    utc: "2009-02-13 23:31:30", // UTC time
-    steps: 0x000000000273ef07, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "91819424", // TOTP token
-    mode: "sha256", // The hashing algorithm
+    timestamp: 1234567890,
+    utc: "2009-02-13 23:31:30",
+    steps: 0x000000000273ef07,
+    totp: "91819424",
+    mode: "sha256",
   },
   {
-    timestamp: 1234567890, // Time in sec
-    utc: "2009-02-13 23:31:30", // UTC time
-    steps: 0x000000000273ef07, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "93441116", // TOTP token
-    mode: "sha512", // The hashing algorithm
-  },
-
-  ///
-  {
-    timestamp: 2000000000, // Time in sec
-    utc: "2033-05-18 03:33:20", // UTC time
-    steps: 0x0000000003f940aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "69279037", // TOTP token
-    mode: "sha1", // The hashing algorithm
+    timestamp: 1234567890,
+    utc: "2009-02-13 23:31:30",
+    steps: 0x000000000273ef07,
+    totp: "93441116",
+    mode: "sha512",
   },
   {
-    timestamp: 2000000000, // Time in sec
-    utc: "2033-05-18 03:33:20", // UTC time
-    steps: 0x0000000003f940aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "90698825", // TOTP token
-    mode: "sha256", // The hashing algorithm
+    timestamp: 2000000000,
+    utc: "2033-05-18 03:33:20",
+    steps: 0x0000000003f940aa,
+    totp: "69279037",
+    mode: "sha1",
   },
   {
-    timestamp: 2000000000, // Time in sec
-    utc: "2033-05-18 03:33:20", // UTC time
-    steps: 0x0000000003f940aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "38618901", // TOTP token
-    mode: "sha512", // The hashing algorithm
-  },
-
-  ///
-  {
-    timestamp: 20000000000, // Time in sec
-    utc: "2603-10-11 11:33:20", // UTC time
-    steps: 0x0000000027bc86aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "65353130", // TOTP token
-    mode: "sha1", // The hashing algorithm
+    timestamp: 2000000000,
+    utc: "2033-05-18 03:33:20",
+    steps: 0x0000000003f940aa,
+    totp: "90698825",
+    mode: "sha256",
   },
   {
-    timestamp: 20000000000, // Time in sec
-    utc: "2603-10-11 11:33:20", // UTC time
-    steps: 0x0000000027bc86aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "77737706", // TOTP token
-    mode: "sha256", // The hashing algorithm
+    timestamp: 2000000000,
+    utc: "2033-05-18 03:33:20",
+    steps: 0x0000000003f940aa,
+    totp: "38618901",
+    mode: "sha512",
   },
   {
-    timestamp: 20000000000, // Time in sec
-    utc: "2603-10-11 11:33:20", // UTC time
-    steps: 0x0000000027bc86aa, // The number of time steps since the Unix epoch in hex. calculated by utc / timeSte
-    totp: "47863826", // TOTP token
-    mode: "sha512", // The hashing algorithm
+    timestamp: 20000000000,
+    utc: "2603-10-11 11:33:20",
+    steps: 0x0000000027bc86aa,
+    totp: "65353130",
+    mode: "sha1",
+  },
+  {
+    timestamp: 20000000000,
+    utc: "2603-10-11 11:33:20",
+    steps: 0x0000000027bc86aa,
+    totp: "77737706",
+    mode: "sha256",
+  },
+  {
+    timestamp: 20000000000,
+    utc: "2603-10-11 11:33:20",
+    steps: 0x0000000027bc86aa,
+    totp: "47863826",
+    mode: "sha512",
   },
 ];
