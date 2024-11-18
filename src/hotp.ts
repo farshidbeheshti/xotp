@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { HOTPOptions } from "./types";
 import { uintEncode } from "./encoding";
 import { padStart } from "./utils";
@@ -55,13 +55,43 @@ class HOTP {
     token,
     secret,
     counter = this.counter,
+    window = this.window,
   }: {
     token: string;
     secret: string;
     counter?: number;
-  }) {}
+    window?: number;
+  }): boolean {
+    return (
+      this.compare({
+        token,
+        secret,
+        counter,
+        window,
+      }) != null
+    );
+  }
 
-  verifyDelta({
+  compare({
+    token,
+    secret,
+    counter = this.counter,
+    window = this.window,
+  }: {
+    token: string;
+    secret: string;
+    counter?: number;
+    window?: number;
+  }): number | null {
+    if (this.equals({ token, secret, counter })) return 0;
+    for (let i = 1; i <= window; i++) {
+      if (this.equals({ token, secret, counter: counter + i })) return i;
+      if (this.equals({ token, secret, counter: counter - i })) return -i;
+    }
+    return null;
+  }
+
+  equals({
     token,
     secret,
     counter = this.counter,
@@ -69,7 +99,10 @@ class HOTP {
     token: string;
     secret: string;
     counter?: number;
-  }) {}
+  }): boolean {
+    const generatedToken = this.generate({ secret, counter });
+    return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
+  }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
 }
