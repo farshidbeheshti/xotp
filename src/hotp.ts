@@ -8,17 +8,19 @@ class HOTP {
   counter = this.defaults.counter;
   digits = this.defaults.digits;
   window = this.defaults.window;
-
+  encoding = this.defaults.encoding;
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
     counter = this.defaults.counter,
     digits = this.defaults.digits,
+    encoding = this.defaults.encoding,
   }: Partial<HOTPOptions> = {}) {
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;
     this.counter = counter;
+    this.encoding = encoding;
   }
 
   get defaults(): Readonly<HOTPOptions> {
@@ -27,6 +29,7 @@ class HOTP {
       counter: 0,
       digits: 6,
       window: 1,
+      encoding: "ascii",
     });
   }
 
@@ -37,7 +40,10 @@ class HOTP {
     secret: string;
     counter?: number;
   }) {
-    const digest = createHmac(this.algorithm, Buffer.from(secret))
+    const digest = createHmac(
+      this.algorithm,
+      Buffer.from(secret, this.encoding),
+    )
       .update(uintEncode(counter))
       .digest();
 
