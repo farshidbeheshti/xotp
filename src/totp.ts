@@ -43,7 +43,7 @@ class TOTP {
   }) {
     return this.#hotp.generate({
       secret,
-      counter: (timestamp / 1000 / duration) | 0,
+      counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }
 
@@ -63,12 +63,33 @@ class TOTP {
     return this.#hotp.validate({
       token,
       secret,
-      counter: (timestamp / 1000 / duration) | 0,
       window: window,
+      counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }
 
-  verifyDelta({
+  compare({
+    token,
+    secret,
+    timestamp = Date.now(),
+    duration = this.duration,
+    window = this.window,
+  }: {
+    token: string;
+    secret: string;
+    timestamp: number;
+    duration: number;
+    window?: number;
+  }): number | null {
+    return this.#hotp.compare({
+      token,
+      secret,
+      window,
+      counter: this.#calcHotpCounter({ timestamp, duration }),
+    });
+  }
+
+  equals({
     token,
     secret,
     timestamp = Date.now(),
@@ -78,9 +99,25 @@ class TOTP {
     secret: string;
     timestamp: number;
     duration: number;
-  }) {}
+  }): boolean {
+    return this.#hotp.equals({
+      token,
+      secret,
+      counter: this.#calcHotpCounter({ timestamp, duration }),
+    });
+  }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
+
+  #calcHotpCounter({
+    timestamp,
+    duration,
+  }: {
+    timestamp: number;
+    duration: number;
+  }) {
+    return (timestamp / 1000 / duration) | 0;
+  }
 }
 
 export { TOTP };
