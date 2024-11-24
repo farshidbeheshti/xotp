@@ -5,5 +5,4 @@ export type HOTPOptions = {
   counter: number;
   digits: number;
   window: number;
-  encoding: Encoding;
 };

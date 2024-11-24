@@ -1,26 +1,24 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { HOTPOptions } from "./types";
-import { uintEncode } from "./encoding";
+import { uintEncode, Encoding } from "./encoding";
 import { padStart } from "./utils";
+import { base32Decode } from "./encoding/base32";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
   counter = this.defaults.counter;
   digits = this.defaults.digits;
   window = this.defaults.window;
-  encoding = this.defaults.encoding;
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
     counter = this.defaults.counter,
     digits = this.defaults.digits,
-    encoding = this.defaults.encoding,
   }: Partial<HOTPOptions> = {}) {
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;
     this.counter = counter;
-    this.encoding = encoding;
   }
 
   get defaults(): Readonly<HOTPOptions> {
@@ -29,21 +27,25 @@ class HOTP {
       counter: 0,
       digits: 6,
       window: 1,
-      encoding: "ascii",
     });
   }
 
   generate({
     secret,
+    encoding,
     counter = this.counter++,
   }: {
     secret: string;
+    encoding: Encoding;
     counter?: number;
   }) {
-    const digest = createHmac(
-      this.algorithm,
-      Buffer.from(secret, this.encoding),
-    )
+    let buffer: Buffer;
+    if (this.#isBase32(encoding)) {
+      buffer = Buffer.from(base32Decode(secret, "RFC4648"));
+    } else {
+      buffer = Buffer.from(secret, encoding);
+    }
+    const digest = createHmac(this.algorithm, buffer)
       .update(uintEncode(counter))
       .digest();
 
@@ -60,11 +62,13 @@ class HOTP {
   validate({
     token,
     secret,
+    encoding,
     counter = this.counter,
     window = this.window,
   }: {
     token: string;
     secret: string;
+    encoding: Encoding;
     counter?: number;
     window?: number;
   }): boolean {
@@ -72,6 +76,7 @@ class HOTP {
       this.compare({
         token,
         secret,
+        encoding,
         counter,
         window,
       }) != null
@@ -81,18 +86,22 @@ class HOTP {
   compare({
     token,
     secret,
+    encoding,
     counter = this.counter,
     window = this.window,
   }: {
     token: string;
     secret: string;
+    encoding: Encoding;
     counter?: number;
     window?: number;
   }): number | null {
-    if (this.equals({ token, secret, counter })) return 0;
+    if (this.equals({ token, secret, encoding, counter })) return 0;
     for (let i = 1; i <= window; i++) {
-      if (this.equals({ token, secret, counter: counter + i })) return i;
-      if (this.equals({ token, secret, counter: counter - i })) return -i;
+      if (this.equals({ token, secret, encoding, counter: counter + i }))
+        return i;
+      if (this.equals({ token, secret, encoding, counter: counter - i }))
+        return -i;
     }
     return null;
   }
@@ -100,17 +109,21 @@ class HOTP {
   equals({
     token,
     secret,
+    encoding,
     counter = this.counter,
   }: {
     token: string;
     secret: string;
+    encoding: Encoding;
     counter?: number;
   }): boolean {
-    const generatedToken = this.generate({ secret, counter });
+    const generatedToken = this.generate({ secret, encoding, counter });
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
+
+  #isBase32 = (type: Encoding): type is Encoding => type === "base32";
 }
 
 export { HOTP };

@@ -1,6 +1,6 @@
 export * from "./uint8";
 
-// TODO: base32 is missing!
+// TODO: base32 formats "base32hex" and "base32crockford" are missing!
 export type Encoding =
   | "ascii"
   | "utf8"
@@ -13,4 +13,5 @@ export type Encoding =
   | "base64url"
   | "latin1"
   | "binary"
-  | "hex";
+  | "hex"
+  | "base32";
