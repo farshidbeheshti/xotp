@@ -5,5 +5,4 @@ export type TOTPOptions = {
   duration: number;
   digits: number;
   window: number;
-  encoding: Encoding;
 };

@@ -10,6 +10,7 @@ describe("RFC #6238 Test Vectors", () => {
         digits: 8,
       }).generate({
         secret: secret[mode],
+        encoding: "ascii",
         timestamp: timestamp * 1000,
         duration,
       });
