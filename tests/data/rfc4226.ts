@@ -1,4 +1,4 @@
-export const secretKey = "12345678901234567890";
+export const secret = "12345678901234567890";
 
 export const data = [
   {
@@ -52,5 +52,3 @@ export const data = [
     hotp: "520489",
   },
 ];
-
-const formattedHeader = ``;
