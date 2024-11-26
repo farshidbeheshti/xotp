@@ -82,8 +82,8 @@ class TOTP {
     token: string;
     secret: string;
     encoding: Encoding;
-    timestamp: number;
-    duration: number;
+    timestamp?: number;
+    duration?: number;
     window?: number;
   }): number | null {
     return this.#hotp.compare({
