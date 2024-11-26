@@ -1,11 +1,14 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { HOTPOptions } from "./types";
+import { uintEncode, Encoding } from "./encoding";
+import { padStart } from "./utils";
+import { base32Decode } from "./encoding/base32";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
   counter = this.defaults.counter;
   digits = this.defaults.digits;
   window = this.defaults.window;
-
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
@@ -28,34 +31,99 @@ class HOTP {
   }
 
   generate({
-    secretKey,
+    secret,
+    encoding,
     counter = this.counter++,
   }: {
-    secretKey: string;
+    secret: string;
+    encoding: Encoding;
     counter?: number;
-  }) {}
+  }) {
+    let buffer: Buffer;
+    if (this.#isBase32(encoding)) {
+      buffer = Buffer.from(base32Decode(secret, "RFC4648"));
+    } else {
+      buffer = Buffer.from(secret, encoding);
+    }
+    const digest = createHmac(this.algorithm, buffer)
+      .update(uintEncode(counter))
+      .digest();
+
+    const offset = digest[digest.byteLength - 1] & 0xf;
+    const truncatedBinary =
+      ((digest[offset] & 0x7f) << 24) |
+      ((digest[offset + 1] & 0xff) << 16) |
+      ((digest[offset + 2] & 0xff) << 8) |
+      (digest[offset + 3] & 0xff);
+    const token = truncatedBinary % 10 ** this.digits;
+    return padStart(`${token}`, this.digits, "0");
+  }
 
   validate({
     token,
     secret,
+    encoding,
     counter = this.counter,
+    window = this.window,
   }: {
     token: string;
     secret: string;
+    encoding: Encoding;
     counter?: number;
-  }) {}
+    window?: number;
+  }): boolean {
+    return (
+      this.compare({
+        token,
+        secret,
+        encoding,
+        counter,
+        window,
+      }) != null
+    );
+  }
 
-  verifyDelta({
+  compare({
     token,
     secret,
+    encoding,
+    counter = this.counter,
+    window = this.window,
+  }: {
+    token: string;
+    secret: string;
+    encoding: Encoding;
+    counter?: number;
+    window?: number;
+  }): number | null {
+    if (this.equals({ token, secret, encoding, counter })) return 0;
+    for (let i = 1; i <= window; i++) {
+      if (this.equals({ token, secret, encoding, counter: counter + i }))
+        return i;
+      if (this.equals({ token, secret, encoding, counter: counter - i }))
+        return -i;
+    }
+    return null;
+  }
+
+  equals({
+    token,
+    secret,
+    encoding,
     counter = this.counter,
   }: {
     token: string;
     secret: string;
+    encoding: Encoding;
     counter?: number;
-  }) {}
+  }): boolean {
+    const generatedToken = this.generate({ secret, encoding, counter });
+    return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
+  }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
+
+  #isBase32 = (type: Encoding): type is Encoding => type === "base32";
 }
 
 export { HOTP };
