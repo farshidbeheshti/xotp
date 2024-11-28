@@ -82,8 +82,8 @@ class TOTP {
     token: string;
     secret: string;
     encoding: Encoding;
-    timestamp: number;
-    duration: number;
+    timestamp?: number;
+    duration?: number;
     window?: number;
   }): number | null {
     return this.#hotp.compare({
@@ -114,6 +114,26 @@ class TOTP {
       encoding,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
+  }
+
+  timeUsed({
+    timestamp = Date.now(),
+    duration = this.duration,
+  }: {
+    timestamp?: number;
+    duration?: number;
+  } = {}): number {
+    return ((timestamp / 1000) | 0) % duration;
+  }
+
+  timeRemaining({
+    timestamp = Date.now(),
+    duration = this.duration,
+  }: {
+    timestamp?: number;
+    duration?: number;
+  } = {}): number {
+    return duration - this.timeUsed({ timestamp, duration });
   }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
