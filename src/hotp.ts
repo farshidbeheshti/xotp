@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { HOTPOptions } from "./types";
 import { uintEncode, Encoding } from "./encoding";
 import { padStart } from "./utils";
-import { base32Decode } from "./encoding/base32";
+import { Secret } from "./secret";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -32,20 +32,12 @@ class HOTP {
 
   generate({
     secret,
-    encoding,
     counter = this.counter++,
   }: {
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     counter?: number;
   }) {
-    let buffer: Buffer;
-    if (this.#isBase32(encoding)) {
-      buffer = Buffer.from(base32Decode(secret, "RFC4648"));
-    } else {
-      buffer = Buffer.from(secret, encoding);
-    }
-    const digest = createHmac(this.algorithm, buffer)
+    const digest = createHmac(this.algorithm, secret.buffer)
       .update(uintEncode(counter))
       .digest();
 
@@ -62,13 +54,12 @@ class HOTP {
   validate({
     token,
     secret,
-    encoding,
+
     counter = this.counter,
     window = this.window,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     counter?: number;
     window?: number;
   }): boolean {
@@ -76,7 +67,6 @@ class HOTP {
       this.compare({
         token,
         secret,
-        encoding,
         counter,
         window,
       }) != null
@@ -86,22 +76,19 @@ class HOTP {
   compare({
     token,
     secret,
-    encoding,
     counter = this.counter,
     window = this.window,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
+
     counter?: number;
     window?: number;
   }): number | null {
-    if (this.equals({ token, secret, encoding, counter })) return 0;
+    if (this.equals({ token, secret, counter })) return 0;
     for (let i = 1; i <= window; i++) {
-      if (this.equals({ token, secret, encoding, counter: counter + i }))
-        return i;
-      if (this.equals({ token, secret, encoding, counter: counter - i }))
-        return -i;
+      if (this.equals({ token, secret, counter: counter + i })) return i;
+      if (this.equals({ token, secret, counter: counter - i })) return -i;
     }
     return null;
   }
@@ -109,15 +96,13 @@ class HOTP {
   equals({
     token,
     secret,
-    encoding,
     counter = this.counter,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     counter?: number;
   }): boolean {
-    const generatedToken = this.generate({ secret, encoding, counter });
+    const generatedToken = this.generate({ secret, counter });
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 

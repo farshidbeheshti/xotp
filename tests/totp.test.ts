@@ -1,5 +1,4 @@
-import { time } from "console";
-import { TOTP } from "../src/";
+import { TOTP, Secret } from "../src/";
 import { data, secret, duration } from "./data/rfc6238";
 import { randomNum } from "./util";
 
@@ -11,8 +10,7 @@ describe("RFC #6238 Test Vectors", () => {
         algorithm: mode,
         digits: 8,
       }).generate({
-        secret: secret[mode],
-        encoding: "ascii",
+        secret: Secret.from(secret[mode], "ascii"),
         timestamp: timestamp * 1000,
         duration,
       });
@@ -25,7 +23,6 @@ describe("RFC #6238 Test Vectors", () => {
     ({ timestamp, mode }) => {
       const window = 10;
       const rnd = randomNum(-window, window);
-      const encoding = "ascii";
       const totp = new TOTP({
         algorithm: mode,
         digits: 8,
@@ -37,15 +34,13 @@ describe("RFC #6238 Test Vectors", () => {
       if (inWindow <= -timestamp) inWindow = 0;
 
       const token = totp.generate({
-        secret: secret[mode],
-        encoding,
+        secret: Secret.from(secret[mode], "ascii"),
         timestamp: (timestamp + inWindow) * 1000,
       });
 
       const delta = totp.compare({
         token: token,
-        secret: secret[mode],
-        encoding,
+        secret: Secret.from(secret[mode], "ascii"),
         timestamp: timestamp * 1000,
       });
       expect(delta).toStrictEqual(inWindow / duration);

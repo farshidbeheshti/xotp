@@ -1,6 +1,6 @@
-import { TOTPOptions } from "./types/";
+import { TOTPOptions } from "@src/types/";
 import { HOTP } from "./hotp";
-import { Encoding } from "crypto";
+import { Secret } from "./secret";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -31,18 +31,15 @@ class TOTP {
 
   generate({
     secret,
-    encoding,
     timestamp = Date.now(),
     duration = this.duration,
   }: {
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     timestamp?: number;
     duration?: number;
   }) {
     return this.#hotp.generate({
       secret,
-      encoding,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }
@@ -50,14 +47,12 @@ class TOTP {
   validate({
     token,
     secret,
-    encoding,
     timestamp = Date.now(),
     duration = this.duration,
     window = this.window,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     timestamp?: number;
     duration?: number;
     window?: number;
@@ -65,7 +60,6 @@ class TOTP {
     return this.#hotp.validate({
       token,
       secret,
-      encoding,
       window: window,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
@@ -74,14 +68,12 @@ class TOTP {
   compare({
     token,
     secret,
-    encoding,
     timestamp = Date.now(),
     duration = this.duration,
     window = this.window,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     timestamp?: number;
     duration?: number;
     window?: number;
@@ -89,7 +81,6 @@ class TOTP {
     return this.#hotp.compare({
       token,
       secret,
-      encoding,
       window,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
@@ -98,20 +89,17 @@ class TOTP {
   equals({
     token,
     secret,
-    encoding,
     timestamp = Date.now(),
     duration = this.duration,
   }: {
     token: string;
-    secret: string;
-    encoding: Encoding;
+    secret: Secret;
     timestamp: number;
     duration: number;
   }): boolean {
     return this.#hotp.equals({
       token,
       secret,
-      encoding,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }

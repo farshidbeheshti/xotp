@@ -1,2 +1,4 @@
-export { TOTP } from "./totp";
-export { HOTP } from "./hotp";
+export * from "./totp";
+export * from "./hotp";
+export * from "./secret";
+export * from "./utils";
