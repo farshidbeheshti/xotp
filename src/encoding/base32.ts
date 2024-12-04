@@ -10,7 +10,7 @@ const formats = {
 
 export const base32Encode = (
   arr: Uint8Array,
-  format: "RFC4648" | "RFC4648_HEX",
+  format: "RFC4648" | "RFC4648_HEX" = "RFC4648",
 ): string => {
   const { padding, alphabet } = formats[format];
   let bytes = 0b0;
