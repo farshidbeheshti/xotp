@@ -1,7 +1,7 @@
-import { Encoding } from "@src/encoding";
+import { Algorithm } from "@src/types";
 
 export type HOTPOptions = {
-  algorithm: "sha1" | "sha256" | "sha512";
+  algorithm: Algorithm;
   counter: number;
   digits: number;
   window: number;

@@ -1,7 +1,7 @@
-import { Encoding } from "@src/encoding";
+import { Algorithm } from "@src/types";
 
 export type TOTPOptions = {
-  algorithm: "sha1" | "sha256" | "sha512";
+  algorithm: Algorithm;
   duration: number;
   digits: number;
   window: number;
