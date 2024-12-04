@@ -1,4 +1,4 @@
-import { TOTPOptions } from "@src/types/";
+import { TOTPOptions, Algorithm } from "@src/types";
 import { HOTP } from "./hotp";
 import { Secret } from "./secret";
 
@@ -32,15 +32,21 @@ class TOTP {
   generate({
     secret,
     timestamp = Date.now(),
+    algorithm = this.algorithm,
+    digits = this.digits,
     duration = this.duration,
   }: {
     secret: Secret;
     timestamp?: number;
+    algorithm?: Algorithm;
+    digits?: number;
     duration?: number;
   }) {
     return this.#hotp.generate({
       secret,
       counter: this.#calcHotpCounter({ timestamp, duration }),
+      algorithm,
+      digits,
     });
   }
 
@@ -48,20 +54,26 @@ class TOTP {
     token,
     secret,
     timestamp = Date.now(),
+    algorithm = this.algorithm,
+    digits = this.digits,
     duration = this.duration,
     window = this.window,
   }: {
     token: string;
     secret: Secret;
     timestamp?: number;
+    algorithm?: Algorithm;
+    digits?: number;
     duration?: number;
     window?: number;
   }): boolean {
     return this.#hotp.validate({
       token,
       secret,
-      window: window,
       counter: this.#calcHotpCounter({ timestamp, duration }),
+      algorithm,
+      digits,
+      window: window,
     });
   }
 
@@ -69,12 +81,16 @@ class TOTP {
     token,
     secret,
     timestamp = Date.now(),
+    algorithm = this.algorithm,
+    digits = this.digits,
     duration = this.duration,
     window = this.window,
   }: {
     token: string;
     secret: Secret;
     timestamp?: number;
+    algorithm?: Algorithm;
+    digits?: number;
     duration?: number;
     window?: number;
   }): number | null {
@@ -82,6 +98,8 @@ class TOTP {
       token,
       secret,
       window,
+      algorithm,
+      digits,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }
@@ -90,16 +108,22 @@ class TOTP {
     token,
     secret,
     timestamp = Date.now(),
+    algorithm = this.algorithm,
+    digits = this.digits,
     duration = this.duration,
   }: {
     token: string;
     secret: Secret;
     timestamp: number;
+    algorithm?: Algorithm;
+    digits?: number;
     duration: number;
   }): boolean {
     return this.#hotp.equals({
       token,
       secret,
+      algorithm,
+      digits,
       counter: this.#calcHotpCounter({ timestamp, duration }),
     });
   }

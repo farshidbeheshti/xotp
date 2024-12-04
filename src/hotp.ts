@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { HOTPOptions } from "./types";
-import { uintEncode, Encoding } from "./encoding";
+import { HOTPOptions, Algorithm } from "@src/types";
+import { uintEncode } from "./encoding";
 import { padStart } from "./utils";
 import { Secret } from "./secret";
 
@@ -32,12 +32,16 @@ class HOTP {
 
   generate({
     secret,
-    counter = this.counter++,
+    counter = ++this.counter,
+    algorithm = this.algorithm,
+    digits = this.digits,
   }: {
     secret: Secret;
     counter?: number;
+    algorithm?: Algorithm;
+    digits?: number;
   }) {
-    const digest = createHmac(this.algorithm, secret.buffer)
+    const digest = createHmac(algorithm, secret.buffer)
       .update(uintEncode(counter))
       .digest();
 
@@ -47,20 +51,23 @@ class HOTP {
       ((digest[offset + 1] & 0xff) << 16) |
       ((digest[offset + 2] & 0xff) << 8) |
       (digest[offset + 3] & 0xff);
-    const token = truncatedBinary % 10 ** this.digits;
-    return padStart(`${token}`, this.digits, "0");
+    const token = truncatedBinary % 10 ** digits;
+    return padStart(`${token}`, digits, "0");
   }
 
   validate({
     token,
     secret,
-
     counter = this.counter,
+    algorithm = this.algorithm,
+    digits = this.digits,
     window = this.window,
   }: {
     token: string;
     secret: Secret;
     counter?: number;
+    algorithm?: Algorithm;
+    digits?: number;
     window?: number;
   }): boolean {
     return (
@@ -68,6 +75,8 @@ class HOTP {
         token,
         secret,
         counter,
+        digits,
+        algorithm,
         window,
       }) != null
     );
@@ -77,18 +86,27 @@ class HOTP {
     token,
     secret,
     counter = this.counter,
+    digits = this.digits,
+    algorithm = this.algorithm,
     window = this.window,
   }: {
     token: string;
     secret: Secret;
-
     counter?: number;
+    digits?: number;
+    algorithm?: Algorithm;
     window?: number;
   }): number | null {
-    if (this.equals({ token, secret, counter })) return 0;
+    if (this.equals({ token, secret, counter, digits, algorithm })) return 0;
     for (let i = 1; i <= window; i++) {
-      if (this.equals({ token, secret, counter: counter + i })) return i;
-      if (this.equals({ token, secret, counter: counter - i })) return -i;
+      if (
+        this.equals({ token, secret, counter: counter + i, digits, algorithm })
+      )
+        return i;
+      if (
+        this.equals({ token, secret, counter: counter - i, digits, algorithm })
+      )
+        return -i;
     }
     return null;
   }
@@ -97,18 +115,25 @@ class HOTP {
     token,
     secret,
     counter = this.counter,
+    algorithm = this.algorithm,
+    digits = this.digits,
   }: {
     token: string;
     secret: Secret;
     counter?: number;
+    algorithm?: Algorithm;
+    digits?: number;
   }): boolean {
-    const generatedToken = this.generate({ secret, counter });
+    const generatedToken = this.generate({
+      secret,
+      counter,
+      algorithm,
+      digits,
+    });
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 
   keyUri({ issuer, label }: { issuer: string; label: string }) {}
-
-  #isBase32 = (type: Encoding): type is Encoding => type === "base32";
 }
 
 export { HOTP };
