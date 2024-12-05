@@ -5,4 +5,6 @@ export type HOTPOptions = {
   counter: number;
   digits: number;
   window: number;
+  issuer: string;
+  account: string;
 };

@@ -9,16 +9,22 @@ class HOTP {
   counter = this.defaults.counter;
   digits = this.defaults.digits;
   window = this.defaults.window;
+  issuer = this.defaults.issuer;
+  account = this.defaults.account;
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
     counter = this.defaults.counter,
     digits = this.defaults.digits,
+    issuer = this.defaults.issuer,
+    account = this.defaults.account,
   }: Partial<HOTPOptions> = {}) {
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;
     this.counter = counter;
+    this.issuer = issuer;
+    this.account = account;
   }
 
   get defaults(): Readonly<HOTPOptions> {
@@ -27,6 +33,8 @@ class HOTP {
       counter: 0,
       digits: 6,
       window: 1,
+      issuer: "xotp",
+      account: "",
     });
   }
 
@@ -133,7 +141,35 @@ class HOTP {
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 
-  keyUri({ issuer, label }: { issuer: string; label: string }) {}
+  keyUri({
+    secret,
+    account,
+    issuer = this.defaults.issuer,
+    algorithm = this.defaults.algorithm,
+    counter = this.defaults.counter,
+    digits = this.defaults.digits,
+  }: {
+    secret: Secret;
+    account: string;
+    issuer?: string;
+    algorithm?: Algorithm;
+    counter?: number;
+    digits?: number;
+  }): string {
+    const e = encodeURIComponent;
+    const params = [
+      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
+      `algorithm=${e(algorithm.toUpperCase())}`,
+      `digits=${e(digits)}`,
+      `counter=${e(counter)}`,
+    ];
+    let label = account;
+    if (issuer) {
+      label = `${e(issuer)}:${e(label)}`;
+      params.push(`issuer=${e(issuer)}`);
+    }
+    return `otpauth://hotp/${label}?${params.join("&")}`;
+  }
 }
 
 export { HOTP };

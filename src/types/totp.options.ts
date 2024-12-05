@@ -5,4 +5,6 @@ export type TOTPOptions = {
   duration: number;
   digits: number;
   window: number;
+  issuer: string;
+  account: string;
 };

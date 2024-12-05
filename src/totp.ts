@@ -7,17 +7,23 @@ class TOTP {
   digits = this.defaults.digits;
   window = this.defaults.window;
   duration = this.defaults.duration;
+  issuer = this.defaults.issuer;
+  account = this.defaults.account;
   #hotp: HOTP;
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
     duration = this.defaults.duration,
     digits = this.defaults.digits,
+    issuer = this.defaults.issuer,
+    account = this.defaults.account,
   }: Partial<TOTPOptions> = {}) {
     this.algorithm = algorithm;
     this.digits = digits;
     this.window = window;
     this.duration = duration;
+    this.issuer = issuer;
+    this.account = account;
     this.#hotp = new HOTP({ algorithm, window, digits });
   }
   get defaults(): Readonly<TOTPOptions> {
@@ -26,6 +32,8 @@ class TOTP {
       duration: 30,
       digits: 6,
       window: 1,
+      issuer: "xotp",
+      account: "",
     });
   }
 
@@ -148,7 +156,36 @@ class TOTP {
     return duration - this.timeUsed({ timestamp, duration });
   }
 
-  keyUri({ issuer, label }: { issuer: string; label: string }) {}
+  keyUri({
+    secret,
+    account,
+    issuer = this.defaults.issuer,
+    algorithm = this.defaults.algorithm,
+    duration = this.defaults.duration,
+    digits = this.defaults.digits,
+  }: {
+    secret: Secret;
+    account: string;
+    issuer?: string;
+    algorithm?: Algorithm;
+    duration?: number;
+    digits?: number;
+  }): string {
+    const e = encodeURIComponent;
+
+    const params = [
+      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
+      `algorithm=${e(algorithm.toUpperCase())}`,
+      `digits=${e(digits)}`,
+      `period=${e(duration)}`,
+    ];
+    let label = account;
+    if (issuer) {
+      label = `${e(issuer)}:${e(label)}`;
+      params.push(`issuer=${e(issuer)}`);
+    }
+    return `otpauth://totp/${label}?${params.join("&")}`;
+  }
 
   #calcHotpCounter({
     timestamp,
