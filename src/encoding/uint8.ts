@@ -5,7 +5,7 @@ export function uintEncode(num: number): Uint8Array {
 
     // Shift 8 bits to the right and rounds down the result!
     // NOTE: Right shift (>>) operator only works on 32-bit
-    // integers, but |num| could be an 8-byte integer!
+    // integers, but `num` could be an 8-byte integer!
     num = (num / 2 ** 8) | 0;
   }
   return bytes;
