@@ -11,7 +11,7 @@
     "test": "jest --coverage"
   },
   "author": "Farshid Beheshti",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "devDependencies": {
     "@types/jest": "^29.5.13",
