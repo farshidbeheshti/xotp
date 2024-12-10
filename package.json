@@ -1,24 +1,53 @@
 {
-  "name": "2fa",
-  "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "build":"tsc",
-    "start:dev": "npx nodemon ./src/index.ts",
-    "test": "jest --coverage"
-  },
+  "name": "xotp",
+  "description": "One-Time Password (HOTP/TOTP) library for Node.js with support for Google Authenticator.",
   "author": "Farshid Beheshti",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.js",
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "prepare": "npm run build",
+    "clean": "rimraf ./dist",
+    "start:dev": "npx nodemon ./src/index.ts",
+    "test:coverage": "rimraf ./coverage & jest --coverage",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farshidbeheshti/xotp.git"
+  },
+  "bugs": "https://github.com/farshidbeheshti/xotp/issues",
+  "homepage": "https://github.com/farshidbeheshti/xotp",
   "license": "MIT",
-  "description": "",
+  
+  "keywords": [
+    "otp",
+    "totp",
+    "hotp",
+    "two-factor authentication",
+    "2fa",
+    "one time password",
+    "google authenticator",
+    "authenticator",
+    "multi-factor authentication",
+    "time-based one-time password",
+    "authentication",
+    "2 factor"
+  ],
   "devDependencies": {
     "@types/jest": "^29.5.13",
     "@types/node": "^22.7.6",
     "jest": "^29.7.0",
     "nodemon": "^3.1.7",
     "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"

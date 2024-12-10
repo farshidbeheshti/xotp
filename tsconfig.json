@@ -1,7 +1,8 @@
 {
   "include": ["**/*"],
-  "exclude": ["node_modules/**", "dist/**", "jest.config.js","tests"],
+  "exclude": ["node_modules/**", "dist/**", "jest.old.config.js","tests/**", "coverage/**"],
   "compilerOptions": {
+    "declaration": true,
     "outDir": "dist",
     "rootDir": "src",
     "target": "es2016",
