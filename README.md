@@ -52,7 +52,7 @@ const isValidated = totp.validate({secret, token})
 
 You also could pass more options to the `validate(options)` method to overwrite options when the TOTP instance is initialized!
 
-## Calculating delta of given token and
+## Calculating delta of given token
 
 If you want to get difference between the current time step and the time step at which the token was found, use `compare()` method.
 
