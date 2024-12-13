@@ -17,25 +17,31 @@ These datasets can be found in the `tests/data` folder:
 
 # Usage
 
-### Generate a time-based OTP token.
+`import { Secret, TOTP } from "xotp";`
 
-`import {Secret, TOTP} from "xotp";`
+## Generating a time-based OTP token.
 
-If your have already a secret key in any supported encoding.
+If your have already a secret key in supported encodings.
 
-```
-const secret = Secret.from("your Secret Key")
+```js
+const secret = Secret.from("your Secret Key");
 ```
 
 Or create a secret, if you don't have any!
 
-```
+```js
 const secret = new Secret(); // a random 32-byte key
 ```
 
-Generate a token based on secret you've created!
+Secret constructor with no arguments generates a 32-byte random key, but could set the size for the random generated secret in bytes:
 
+```js
+const secret = new Secret({ size: 20 });
 ```
+
+### And generate a token with the secret you've juest created!
+
+```js
 const totp = new TOTP(/* options, if any! */);
 const token = totp.generate({ secret });
 ```
@@ -43,31 +49,32 @@ const token = totp.generate({ secret });
 You can customize the token by passing an option argument to TOTP consturctor.
 to know all options available for totp, see section TOTP Options!
 
-## Validate tokens
+## Validating tokens
 
-```
-const token = 'user token';
-const isValidated = totp.validate({secret, token})
+```js
+const token = "user token";
+const isValidated = totp.validate({ secret, token });
 ```
 
-You also could pass more options to the `validate(options)` method to overwrite options when the TOTP instance is initialized!
+You also could pass more options to the `validate(options)` method to overwrite options by them TOTP instance is initialized!
 
 ## Calculating delta of given token
 
 If you want to get difference between the current time step and the time step at which the token was found, use `compare()` method.
 
-```
-const token = 'user token';
-const isValidated = totp.compare({secret, token})
+```js
+const token = "user token";
+const isValidated = totp.compare({ secret, token });
 ```
 
-Returns `0` if a token is for the current time step and `null` if the token is not found in the serach window. You could change search window in options passed to the method and also options passed to the TOTP constructor, if you want to change the default value. Default value for the window is 1.
+Returns `0` if a token is for the current time step and `null` if the token is not found in the serach window, otherwise, returns the differences in window.
+You could change search window in options passed to the method and also options passed to the TOTP constructor, if you want to change the default value. Default value for the window is 1.
 
-## Convert to Google Authenticator key URI format
+## Converting to Google Authenticator key URI format
 
-```
-const account = 'fullname, username or email'
-const keyuri = totp.keyuri( {secret, account})
+```js
+const account = "fullname, username or email";
+const keyuri = totp.keyuri({ secret, account });
 ```
 
 The `account` is name of the user who otp is crated for. It's used only to show the user in authenticator apps like google authenticator.
