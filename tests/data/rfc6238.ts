@@ -1,5 +1,5 @@
 /*
-Test vectors provided in the spec, see Appendix B of RFC#6238 (TOTP):
+Test vectors provided in the RFC doc, see Appendix B of RFC#6238 (TOTP):
 https://datatracker.ietf.org/doc/html/rfc6238#appendix-B
 +-------------+--------------+------------------+----------+--------+
   |  Time (sec) |   UTC Time   | Value of T (hex) |   TOTP   |  Mode  |
@@ -43,7 +43,7 @@ https://datatracker.ietf.org/doc/html/rfc6238#appendix-B
   +-------------+--------------+------------------+----------+--------+
 */
 
-// There was three different secrets
+// There were three different secrets in the spec!
 export const secret = {
   sha1: "12345678901234567890",
   sha256: "12345678901234567890123456789012",
@@ -54,9 +54,9 @@ export const secret = {
 export const duration = 30;
 
 export const data: {
-  timestamp: number; // Time in sec
+  timestamp: number; // These times are defined by the RFC in seconds and we convert them to milliseconds in the test suite.
   utc: string; // UTC time
-  steps: number; // Calculated by utc / timeStep, the number of time steps since the Unix epoch in hex.
+  steps: number; // Calculated by `utc` / `timeStep`, the number of time steps in hex since the Unix epoch.
   totp: string; // TOTP token
   mode: "sha1" | "sha256" | "sha512"; // The hashing algorithm
 }[] = [
