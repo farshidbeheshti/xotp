@@ -21,7 +21,7 @@ As a quick start, you could generate and verify OTPs in two easy steps:
 
 ### Getting a Secret
 
-First, you need a secret key with which to generate an OTP.
+First, you need a secret key with which to generate a OTP.
 If you already have a secret key as a string in any [supported encodings](#supported-encodings):
 
 ```js
@@ -52,7 +52,7 @@ However, you can aslo call the `generate({secret, ...options})` method with spec
 
 ## OTP Verification
 
-The user has submitted a token that you previously generated using XOTP or one of the authentication apps like Google Authenticator, and you now need to verify that:
+The user has submitted a token that you previously generated using XOTP or one of the authentication apps like Google Authenticator, and now you need to verify that:
 
 ```js
 const token = "token submitted by user"; // Token sent by user to validate against
@@ -71,7 +71,7 @@ const delta = totp.compare({ secret, token });
 ```
 
 It returns `0` if a token is for the current time step and `null` if the token is not found in the serach window, otherwise, returns the differences in window.
-You could change search window in options passed to the method and also options passed to the TOTP constructor function, if you want to change the default value. Default value for the window is 1 and it means ......
+You could change search window in options passed to the method and also options passed to the TOTP constructor function, if you want to change the default value. Default value for the window is 1 and it means that it checks one time step before (-1) and also after (1) the current time step (0) to see if the token is generated in one of them.
 
 ## Google Authenticator Key URI
 
@@ -110,7 +110,7 @@ const secret = new Secret();
 const secret = new Secret({ size: 32 });
 ```
 
-If you don't have idea of what size is right for your needs and only know the algorithm you're going to use, call the `for` static method to get an instance of the `Secret` for a specific algorithm of [supported variants](#supported-algorithms)
+If you don't have idea of what size is right for your needs and only know the algorithm you're going to use, call the `for` static method to get an instance of the `Secret` for a specific algorithm of [supported variants](#supported-algorithms).
 
 ```js
 const secret = Secret.for("sha512");
@@ -135,7 +135,7 @@ Or use the `from` static method to retrieve a `Secret` instance from the buffer:
 const secret = Secret.from(buffer);
 ```
 
-You could also use `from` static method to get a `Secret` instance from a string in [different encodings](#supported-encodings)
+You could also use `from` static method to get a `Secret` instance from a string in [different encodings](#supported-encodings).
 
 ```js
 const secret = Secret.from("LBHVIUBAFBKE6VCQF5EE6VCQFE======", "base32");
@@ -185,7 +185,7 @@ The default encoding for `toString()` is `base32`, because some authenticator ap
 
 ## HOTP
 
-#### XOTP also supports HOTP. Use "HOTP" instead of "TOTP" in all the examples above to see HOTP functions in action. Depending on your requirements, you may need to replace "timestamp" with "counter" if you are not using functions with default arguments.
+XOTP also supports HOTP. Use "HOTP" instead of "TOTP" in all the examples above to see HOTP functions in action. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
 
 <a id="supported_encodings"><a>
 
@@ -203,8 +203,8 @@ The default encoding for `toString()` is `base32`, because some authenticator ap
 
 If you need an encoding that is not on this list, let us know via [issues][issues]!
 
-> [!NOTE]
-> Google Authenticator uses base32 encoding for the secret key!
+> [!TIP]
+> Google Authenticator uses `base32` encoding for the secret key!
 
 <a id="supported_algorithms"><a>
 
@@ -224,7 +224,7 @@ If you need an encoding that is not on this list, let us know via [issues][issue
 
   If you need an algorithm that is not in these options, please open an [issue][issues] for that!
 
-> [!NOTE]
+> [!TIP]
 > Google Authenticator only supports `sha1`,`sha256`, `sha512` algorithms.
 
 ## License
