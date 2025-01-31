@@ -11,11 +11,15 @@ These datasets can be found in the `tests/data` folder:
 
 # Install
 
-`npm i xotp --save`
+```
+npm i xotp --save
+```
 
 # Usage
 
-`import { Secret, TOTP } from "xotp";`
+```
+import { Secret, TOTP } from "xotp";
+```
 
 As a quick start, you could generate and verify OTPs in two easy steps:
 
@@ -28,10 +32,10 @@ If you already have a secret key as a string in any [supported encodings](#suppo
 const secret = Secret.from("your Secret Key");
 ```
 
-Or use the `Secret` constructor function to generate a cryptographically strong 32-byte random key:
+Or use the `Secret` constructor function to generate a cryptographically strong 20-byte random key:
 
 ```js
-const secret = new Secret(); // a random 32-byte key
+const secret = new Secret();
 ```
 
 See other [secret](#secret-reference) features if you need to generate the secret from a native Buffer type or store the secret in any encoding!
@@ -102,12 +106,12 @@ Use the `Secret` constructor function to generate a secret key of desired size i
 const secret = new Secret({ size: 64 });
 ```
 
-The size argument is a number indicating the number of bytes to generate, the default value is 32 bytes.
+The size argument is a number indicating the number of bytes to generate, the default value is 20 bytes.
 
 ```js
 const secret = new Secret();
 // Same as
-const secret = new Secret({ size: 32 });
+const secret = new Secret({ size: 20 });
 ```
 
 If you don't have idea of what size is right for your needs and only know the algorithm you're going to use, call the `for` static method to get an instance of the `Secret` for a specific algorithm of [supported variants](#supported-algorithms).
