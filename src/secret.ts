@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { Algorithm, Encoding } from "@src/types";
-import { base32Decode, base32Encode } from "@src/encoding";
+import { Algorithm, Encoding } from "./types/index.js";
+import { base32Decode, base32Encode } from "./encoding/index.js";
 
 export class Secret {
   #buffer: Buffer;
@@ -11,7 +11,7 @@ export class Secret {
   constructor({
     data,
     algorithm,
-    size = 256 / 8,
+    size = 160 / 8,
   }: Partial<{
     data: Buffer;
     algorithm: Algorithm;
@@ -21,9 +21,7 @@ export class Secret {
     if (data) {
       buffer = data;
     } else if (algorithm || size) {
-      buffer = randomBytes(
-        (algorithm && this.#getRecommendedSizeFor(algorithm)) || size,
-      );
+      buffer = randomBytes((algorithm && this.#getRecommendedSizeFor(algorithm)) || size);
     } else {
       throw new TypeError("Constructor arguments are not valid.");
     }
@@ -41,15 +39,15 @@ export class Secret {
   static from(data: string, encoding?: Encoding): Secret;
   static from(data: Buffer): Secret;
   static from(data: Buffer | string, encoding: Encoding = "utf-8"): Secret {
-    if (data instanceof Buffer) {
-      return new Secret({ data });
-    } else {
+    if (typeof data == "string") {
       if (encoding == "base32") {
         const bytes = base32Decode(data);
         return new Secret({ data: Buffer.from(bytes) });
       }
       return new Secret({ data: Buffer.from(data, encoding) });
     }
+
+    return new Secret({ data });
   }
 
   toString(encoding: Encoding = "base32") {
