@@ -1,12 +1,13 @@
 {
   "include": ["**/*"],
-  "exclude": ["node_modules/**", "dist/**", "jest.old.config.js","tests/**", "coverage/**"],
+  "exclude": ["node_modules/**", "dist/**", "tests/**", "coverage/**"],
   "compilerOptions": {
     "declaration": true,
     "outDir": "dist",
+    "declarationDir": "dist",
     "rootDir": "src",
-    "target": "es2016",
-    "module": "commonjs",
+    "target": "ES6",
+    "module": "CommonJS",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
