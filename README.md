@@ -1,6 +1,9 @@
 # XOTP
 
-`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Deno and Bun. Ideal for use in Two-Factor Authentication (2FA) / Multi-Factor Authentication (MFA) and is fully compatible with well-known authenticator apps including Google Authenticator and Microsoft Authenticator.
+![NPM Version](https://img.shields.io/npm/v/xotp)
+![NPM Downloads](https://img.shields.io/npm/dm/xotp)
+
+`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno, written in TypeScript, with zero dependencies. Ideal for use in Two-Factor Authentication (2FA) / Multi-Factor Authentication (MFA) and is fully compatible with well-known authenticator apps including Google Authenticator and Microsoft Authenticator.
 
 It implements both HOTP - [RFC 4226][rfc-4226] and TOTP - [RFC 6238][rfc-6238],
 and is tested against the test vectors provided in their respective RFC specifications.
@@ -12,7 +15,7 @@ These datasets can be found in the `tests/data` folder:
 # Install
 
 ```
-npm i xotp --save
+npm i xotp
 ```
 
 # Usage
@@ -128,7 +131,9 @@ If you already have a secret key in binary, you could use a native `Buffer` obje
 ```js
 // Just to define a dummy buffer of random 42-byte binary.
 // you would replace it with your buffer.
-const buffer = Buffer.from(Array.from({ length: 42 }, () => Math.round(Math.random())));
+const buffer = Buffer.from(
+  Array.from({ length: 42 }, () => Math.round(Math.random())),
+);
 
 const secret = new Secret({ buffer });
 ```
@@ -151,7 +156,7 @@ Almost all applications need to store the secret key to verify the user's token 
 const secretKey = secret.toString("hex");
 ```
 
-The default encoding for `toString()` is `base32`, because some authenticator apps, including Google Authenticator, use `base32` as the default for the secret key.
+The default encoding for `toString()` is `base32`, because almost all authenticator apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
 
 > [!NOTE]
 > The default encoding for the `from` method is `utf-8` and the default encoding for `toString` is `base32`, so you need to pass the second argument in one of these two functions. That means:
@@ -229,7 +234,7 @@ If you need an encoding that is not on this list, let us know via [issues][issue
   If you need an algorithm that is not in these options, please open an [issue][issues] for that!
 
 > [!TIP]
-> Google Authenticator only supports `sha1`,`sha256`, `sha512` algorithms.
+> Google Authenticator ignores the algorithm type and uses `sha1` as the default.
 
 ## License
 
