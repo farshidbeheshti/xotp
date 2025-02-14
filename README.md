@@ -1,24 +1,25 @@
-# XOTP
+<p align="center" style="margin-bottom:0">
+  <img src="https://github.com/user-attachments/assets/8ef372d6-3cd7-4202-88b2-519f45f67160" width="250"  />
+</p>
+<h1 align="center">XOTP</h1>
 
-![NPM Version](https://img.shields.io/npm/v/xotp)
-![NPM Downloads](https://img.shields.io/npm/dm/xotp)
+[![Github Release](https://img.shields.io/github/v/release/farshidbeheshti/xotp)](https://www.npmjs.com/package/xotp)
+[![NPM Downloads](https://img.shields.io/npm/d18m/xotp)](https://www.npmjs.com/package/xotp)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white)](https://github.com/farshidbeheshti/xotp)
 
-`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno, written in TypeScript, with zero dependencies. Ideal for use in Two-Factor Authentication (2FA) / Multi-Factor Authentication (MFA) and is fully compatible with well-known authenticator apps including Google Authenticator and Microsoft Authenticator.
+## Description
 
-It implements both HOTP - [RFC 4226][rfc-4226] and TOTP - [RFC 6238][rfc-6238],
-and is tested against the test vectors provided in their respective RFC specifications.
-These datasets can be found in the `tests/data` folder:
+`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno, written in TypeScript, with zero dependencies. It's Ideal for use in Two-Factor Authentication (2FA) / Multi-Factor Authentication (MFA) systems and is compatible with well-known authentication apps including Google Authenticator and Microsoft Authenticator.
 
-- [RFC 4226 Dataset][rfc-4226-dataset]
-- [RFC 6238 Dataset][rfc-6238-dataset]
+It implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP), and has been fully tested with the test vectors from their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset] in the `tests/data` folder.
 
-# Install
+## Install
 
 ```
 npm i xotp
 ```
 
-# Usage
+## Usage
 
 ```
 import { Secret, TOTP } from "xotp";
@@ -57,7 +58,7 @@ To know all options available for the `TOTP` constructor function and their defa
 
 However, you can aslo call the `generate({secret, ...options})` method with specific option values to use them instead of what you initialized the TOTP instance with.
 
-## OTP Verification
+### OTP Verification
 
 The user has submitted a token that you previously generated using XOTP or one of the authentication apps like Google Authenticator, and now you need to verify that:
 
@@ -68,7 +69,7 @@ const isValidToken = totp.validate({ secret, token });
 
 Like almost all `TOTP` and `HOTP` methods, you can pass new option values to the `validate({secret, token, ...options})` method to use them instead of what you initialized the TOTP instance with.
 
-## Calculating Delta of Token
+### Calculating Delta of Token
 
 If you want to find the difference between the current time step and the time step in which a given token was generated, use the `compare` method:
 
@@ -95,9 +96,9 @@ Again, you could use different values for options of ones you previously initial
 
 <a id="reference"><a>
 
-# References
+## References
 
-## Secret
+### Secret
 
 <a id="secret-reference"><a>
 
@@ -163,21 +164,21 @@ The default encoding for `toString()` is `base32`, because almost all authentica
 >
 > ```js
 > const base32SecretKey = secret.toString();
-> const secret = secret.from(base32SecretKey, "base32");
+> const clonedSecret = secret.from(base32SecretKey, "base32");
 > ```
 >
 > Or vice versa:
 >
 > ```js
 > const utf8SecretKey = secret.toString("utf-8");
-> const secret = secret.from(utf8SecretKey);
+> const clonedSecret = secret.from(utf8SecretKey);
 > ```
 >
 > We recommend the former!
 
 <a id="totp_options"><a>
 
-## TOTP Options
+### TOTP Options
 
 | Option    | Type     | Default | Description                                                                                                                                                   |
 | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -192,13 +193,13 @@ The default encoding for `toString()` is `base32`, because almost all authentica
 > You can see that XOTP only gets options that are application-scoped and not user-specific ones, so you need only one instance of `TOTP` or `HOTP` class and reuse that throughout your application.
 > This is also why XOTP does not allow the secret key to be included in the options, to avoid the terrible security problems of using a shared secret key.
 
-## HOTP
+### HOTP
 
 XOTP also supports HOTP. Use "HOTP" instead of "TOTP" in all the examples above to see HOTP functions in action. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
 
 <a id="supported_encodings"><a>
 
-## Supported Encodings:
+### Supported Encodings:
 
 - `base32`
 - `base64`
@@ -217,7 +218,7 @@ If you need an encoding that is not on this list, let us know via [issues][issue
 
 <a id="supported_algorithms"><a>
 
-## Supported Algorithms:
+### Supported Algorithms:
 
 - `sha1`
 - `sha224`
