@@ -144,10 +144,10 @@ class HOTP {
   keyUri({
     secret,
     account,
-    issuer = this.defaults.issuer,
-    algorithm = this.defaults.algorithm,
-    counter = this.defaults.counter,
-    digits = this.defaults.digits,
+    issuer = this.issuer,
+    algorithm = this.algorithm,
+    counter = this.counter,
+    digits = this.digits,
   }: {
     secret: Secret;
     account: string;

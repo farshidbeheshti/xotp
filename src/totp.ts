@@ -159,10 +159,10 @@ class TOTP {
   keyUri({
     secret,
     account,
-    issuer = this.defaults.issuer,
-    algorithm = this.defaults.algorithm,
-    duration = this.defaults.duration,
-    digits = this.defaults.digits,
+    issuer = this.issuer,
+    algorithm = this.algorithm,
+    duration = this.duration,
+    digits = this.digits,
   }: {
     secret: Secret;
     account: string;
