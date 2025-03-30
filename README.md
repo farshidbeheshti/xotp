@@ -13,6 +13,8 @@
 
 It implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP), and has been fully tested with the test vectors from their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset] in the `tests/data` folder.
 
+Try XOTP with the demo available at [xotp.dev][demo]!
+
 ## Install
 
 ```
@@ -21,7 +23,7 @@ npm i xotp
 
 ## Usage
 
-```
+```js
 import { Secret, TOTP } from "xotp";
 ```
 
@@ -253,3 +255,4 @@ If you need an encoding that is not on this list, let us know via [issues][issue
 [rfc-6238]: http://tools.ietf.org/html/rfc6238
 [project-license]: https://github.com/farshidbeheshti/xotp/blob/master/LICENSE
 [issues]: https://github.com/farshidbeheshti/xotp/issues
+[demo]: https://xotp.dev
