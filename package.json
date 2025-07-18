@@ -24,7 +24,7 @@
     "url": "git+https://github.com/farshidbeheshti/xotp.git"
   },
   "bugs": "https://github.com/farshidbeheshti/xotp/issues",
-  "homepage": "https://github.com/farshidbeheshti/xotp",
+  "homepage": "https://xotp.dev",
   "license": "MIT",
   "keywords": [
     "otp",
