@@ -1,5 +1,5 @@
 <p align="center" style="margin-bottom:0">
-  <img src="https://github.com/user-attachments/assets/8ef372d6-3cd7-4202-88b2-519f45f67160" width="250"  />
+  <img src="https://github.com/user-attachments/assets/8ef372d6-3cd7-4202-88b2-519f45f67160" width="200"  />
 </p>
 <h1 align="center">XOTP</h1>
 
@@ -9,13 +9,13 @@
 
 ## Description
 
-`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno, written in TypeScript, with zero dependencies. It's Ideal for use in Two-Factor Authentication (2FA) / Multi-Factor Authentication (MFA) systems and is compatible with well-known authentication apps including Google Authenticator and Microsoft Authenticator.
+`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno environments with zero dependencies. It's perfect for implementing two-factor authentication (2FA) / multifactor authentication (MFA) systems and is fully compatible with Google Authenticator and other well-known authentication apps and devices.
 
-It implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP), and has been fully tested with the test vectors from their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset] in the `tests/data` folder.
+XOTP implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP) and has been fully tested against the test vectors provided in their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset].
 
-Try XOTP with the demo available at [xotp.dev][demo]!
+You can try XOTP with the demo available at [xotp.dev][demo]!
 
-## Install
+## Installation
 
 ```
 npm i xotp
@@ -23,78 +23,77 @@ npm i xotp
 
 ## Usage
 
-```js
+```typescript
 import { Secret, TOTP } from "xotp";
 ```
 
-As a quick start, you could generate and verify OTPs in two easy steps:
+To quickly get started, you can generate or verify OTP tokens in two straightforward steps:
 
-### Getting a Secret
+### Get a Secret
 
-First, you need a secret key with which to generate a OTP.
-If you already have a secret key as a string in any [supported encodings](#supported-encodings):
+First, you need a secret key with which to generate or verify a OTP token.
 
-```js
-const secret = Secret.from("your Secret Key");
+If you already have a secret key as a string in any [supported encoding](#supported-encodings), you can use it like this:
+
+```typescript
+const secret = Secret.from("<YOUR_SECRET_KEY>");
 ```
 
-Or use the `Secret` constructor function to generate a cryptographically strong 20-byte random key:
+Otherwise, use the `Secret` constructor to generate a cryptographically strong 20-byte random key:
 
-```js
+```typescript
 const secret = new Secret();
 ```
 
-See other [secret](#secret-reference) features if you need to generate the secret from a native Buffer type or store the secret in any encoding!
+If you need to generate a secret from a native `Buffer` type, or store it in a particular encoding, see the [Secret reference section](#secret-reference).
 
-### Generating a OTP token
+### Generate an OTP Token
 
-Then generate a OTP token with the secret you have just got:
+Next, generate a OTP token with the secret you've created:
 
-```js
+```typescript
 const totp = new TOTP(/* options, if any! */);
 const token = totp.generate({ secret });
 ```
 
-You can customize tokens using the optional argument of the `new TOTP()` constructor.
-To know all options available for the `TOTP` constructor function and their defaults, see section [TOTP Options](#totp-options).
+You can customize token generation by passing optional arguments to the `new TOTP()` constructor. All available options and their default values are detailed in the [TOTP Options](#totp-options) section. While the `new TOTP()` constructor accepts options, you can override these by passing specific values to the `generate({secret, ...options})` method for individual token requests.
 
-However, you can aslo call the `generate({secret, ...options})` method with specific option values to use them instead of what you initialized the TOTP instance with.
+### Verify an OTP token
 
-### OTP Verification
+When a user submits a token—either one you generated with XOTP or one from an authentication app like Google Authenticator—you'll need to verify it:
 
-The user has submitted a token that you previously generated using XOTP or one of the authentication apps like Google Authenticator, and now you need to verify that:
-
-```js
-const token = "token submitted by user"; // Token sent by user to validate against
-const isValidToken = totp.validate({ secret, token });
+```typescript
+const isValidToken = totp.validate({ secret, token: "<USER_SUBMITTED_TOKEN>" });
 ```
 
-Like almost all `TOTP` and `HOTP` methods, you can pass new option values to the `validate({secret, token, ...options})` method to use them instead of what you initialized the TOTP instance with.
+Similar to all `TOTP` and `HOTP` methods, you can pass new option values to the `validate({secret, token, ...options})` method to override those set during the TOTP instance initialization.
 
-### Calculating Delta of Token
+### Calculating Token Delta
 
-If you want to find the difference between the current time step and the time step in which a given token was generated, use the `compare` method:
+To determine the difference between the current time step and the time step when a given token was generated, use the `compare` method:
 
-```js
-const token = "user token";
-const delta = totp.compare({ secret, token });
+```typescript
+const delta = totp.compare({ secret, token: "<USER_SUBMITTED_TOKEN>" });
 ```
 
-It returns `0` if a token is for the current time step and `null` if the token is not found in the serach window, otherwise, returns the differences in window.
-You could change search window in options passed to the method and also options passed to the TOTP constructor function, if you want to change the default value. Default value for the window is 1 and it means that it checks one time step before (-1) and also after (1) the current time step (0) to see if the token is generated in one of them.
+This method returns `0` if the token is for the current time step, or `null` if the token is not found within the search window. Otherwise, it returns the difference in the window.
+
+You can adjust the search window through the options passed to the method, or by modifying the default value in the options passed to the `TOTP` constructor. The default window value is `1`, meaning it checks one time step before and one time step after the current time step to see if the token was generated in any of those steps.
 
 ## Google Authenticator Key URI
 
-```js
-const account = "fullname, username or email";
-const keyUri = totp.keyUri({ secret, account });
+```typescript
+const keyUri = totp.keyUri({
+  secret,
+  account: "<fullname, username or email>",
+});
 ```
 
-The `account` is the name of the user who otp is created for. It's used only to show the user in authenticator apps like google authenticator.
-Again, you could use different values for options of ones you previously initialized a TOTP instance with.
+The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like google authenticator.
+You can use different values for options than those with which you initially configured a `TOTP` instance.
 
 > [!TIP]
-> You may want to generate and display a QR Code of the generated `keyUri` above, so that could be scanned by authenticator apps like Google Authenticator and user does not have to manually enter the secret.
+> You may want to generate and display a QR Code of the generated `keyUri` to allow authentication apps like Google Authenticator to scan it, eliminating the need for the user to manually enter the secret key.
 
 <a id="reference"><a>
 
@@ -104,36 +103,36 @@ Again, you could use different values for options of ones you previously initial
 
 <a id="secret-reference"><a>
 
-You use `Secret` to generate and retrieve your secret keys in various encodings, so we're going to take a quick look at some of the its functions.
+The `Secret` class allows you to generate and retrieve your secret keys in various encodings. Let's explore some of its key functions:
 
-Use the `Secret` constructor function to generate a secret key of desired size in bytes. It generates a cryptographically strong random key for you.
+Use the `Secret` constructor to generate a cryptographically strong random key of a desired size in bytes.
 
-```js
+```typescript
 const secret = new Secret({ size: 64 });
 ```
 
-The size argument is a number indicating the number of bytes to generate, the default value is 20 bytes.
+The default size is `20` bytes.
 
-```js
+```typescript
 const secret = new Secret();
-// Same as
+// Equivalent to:
 const secret = new Secret({ size: 20 });
 ```
 
-If you don't have idea of what size is right for your needs and only know the algorithm you're going to use, call the `for` static method to get an instance of the `Secret` for a specific algorithm of [supported variants](#supported-algorithms).
+If you're unsure about the appropriate size and only know the algorithm you plan to use, call the for static method to get a Secret instance tailored for a specific [supported algorithm](#supported-algorithms).
 
-```js
+```typescript
 const secret = Secret.for("sha512");
 ```
 
 > [!NOTE]
-> XOTP uses `sha1` as the default algorithm for generating both `TOTP` and `HOTP` tokens. You could use the `sha1`, If you don't still know what algorithm you will use.
+> XOTP uses `sha1` as the default algorithm for generating both `TOTP` and `HOTP` tokens.
 
-If you already have a secret key in binary, you could use a native `Buffer` object or javascript `ArrayBuffer` to initialize an instance of `Secret`, for example:
+If you already have a secret key in binary, you can initialize a `Secret` instance using a native Buffer object or a JavaScript `ArrayBuffer`. For example:
 
-```js
-// Just to define a dummy buffer of random 42-byte binary.
-// you would replace it with your buffer.
+```typescript
+// This defines a dummy buffer of random 42-byte binary.
+// You would replace it with your buffer.
 const buffer = Buffer.from(
   Array.from({ length: 42 }, () => Math.round(Math.random())),
 );
@@ -141,37 +140,37 @@ const buffer = Buffer.from(
 const secret = new Secret({ buffer });
 ```
 
-Or use the `from` static method to retrieve a `Secret` instance from the buffer:
+Alternatively, use the `from` static method to retrieve a `Secret` instance from a buffer:
 
-```js
+```typescript
 const secret = Secret.from(buffer);
 ```
 
-You could also use `from` static method to get a `Secret` instance from a string in [different encodings](#supported-encodings).
+You can also use `from` static method to get a `Secret` instance from a string in [ various encodings](#supported-encodings).
 
-```js
+```typescript
 const secret = Secret.from("LBHVIUBAFBKE6VCQF5EE6VCQFE======", "base32");
 ```
 
-Almost all applications need to store the secret key to verify the user's token later. To do so, use `toString` method to get the string of the secret in one of the [available encodings](#supported-encodings):
+Almost all applications need to store the secret key to verify the user's token later. To do this, use the `toString` method to get the secret key in one of the [available encodings](#supported-encodings):
 
-```js
+```typescript
 const secretKey = secret.toString("hex");
 ```
 
-The default encoding for `toString()` is `base32`, because almost all authenticator apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
+The default encoding for `toString()` is `base32` because most authemtication apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
 
 > [!NOTE]
-> The default encoding for the `from` method is `utf-8` and the default encoding for `toString` is `base32`, so you need to pass the second argument in one of these two functions. That means:
+> The default encoding for the `from` method is `utf-8`, while the default encoding for `toString` is `base32`,Therefore, you need to pass the second argument in one of these two functions. This means:
 >
-> ```js
+> ```typescript
 > const base32SecretKey = secret.toString();
 > const clonedSecret = secret.from(base32SecretKey, "base32");
 > ```
 >
 > Or vice versa:
 >
-> ```js
+> ```typescript
 > const utf8SecretKey = secret.toString("utf-8");
 > const clonedSecret = secret.from(utf8SecretKey);
 > ```
@@ -182,22 +181,22 @@ The default encoding for `toString()` is `base32`, because almost all authentica
 
 ### TOTP Options
 
-| Option    | Type     | Default | Description                                                                                                                                                   |
-| --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| algorithm | `string` | "sha1"  | The algorithm used for calculating the HMAC, see [supported algorithms](#supported-algorithms)!                                                               |
-| digits    | `number` | 6       | The length of the OTP token.                                                                                                                                  |
-| window    | `number` | 1       | Number of window(s) within which validate the token. Try to validate token in the previous and future window if token is not validated in current time        |
-| duration  | `number` | 30      | duration (in seconds) a token is valid for.                                                                                                                   |
-| issuer    | `string` | "xotp"  | The provider or service with which the token is associated, e.g. Github. Used in the keyuri to show the user in authenticator apps like Google Authenticator. |
-| account   | `string` |         | The account with which the token is associated, e.g. the user's email. Used in the keyuri to show the user in authenticator apps like Google Authenticator.   |
+| Option    | Type     | Default | Description                                                                                                                                                                         |
+| --------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| algorithm | `string` | "sha1"  | The algorithm used for calculating the HMAC, see [supported algorithms](#supported-algorithms)!                                                                                     |
+| digits    | `number` | 6       | The length of the OTP token.                                                                                                                                                        |
+| window    | `number` | 1       | The number of window(s) within which to validate the token. If the token isn't validated in the current time step, XOTP attempts to validate it in the previous and future windows. |
+| duration  | `number` | 30      | The duration (in seconds) for which a token is valid.                                                                                                                               |
+| issuer    | `string` | "xotp"  | The provider or service associated with the token (e.g., "Github"). This is just a display field to display the issuer's name in authenticator apps like Google Authenticator.      |
+| account   | `string` |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
 
 > [!TIP]
-> You can see that XOTP only gets options that are application-scoped and not user-specific ones, so you need only one instance of `TOTP` or `HOTP` class and reuse that throughout your application.
-> This is also why XOTP does not allow the secret key to be included in the options, to avoid the terrible security problems of using a shared secret key.
+> XOTP accepts options that are **application-scoped** rather than user-specific. This means you typically only need a single instance of the `TOTP` or `HOTP` class, which you can reuse throughout your application.
+> That's why XOTP does not allow the secret key to be included in the options, to avoid the terrible security problems of using a shared secret key.
 
 ### HOTP
 
-XOTP also supports HOTP. Use "HOTP" instead of "TOTP" in all the examples above to see HOTP functions in action. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
+XOTP also supports HOTP. To use HOTP functions, simply replace "TOTP" with "HOTP" in the examples provided above. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
 
 <a id="supported_encodings"><a>
 
@@ -213,7 +212,7 @@ XOTP also supports HOTP. Use "HOTP" instead of "TOTP" in all the examples above 
 - `binary`
 - `hex`
 
-If you need an encoding that is not on this list, let us know via [issues][issues]!
+If you require an encoding not listed here, please let us know by opening an [issue][issues]!
 
 > [!TIP]
 > Google Authenticator uses `base32` encoding for the secret key!
@@ -234,10 +233,10 @@ If you need an encoding that is not on this list, let us know via [issues][issue
 - `sha3-384`
 - `sha3-512`
 
-  If you need an algorithm that is not in these options, please open an [issue][issues] for that!
+  If you need an algorithm that is not listed, please open an [issue][issues] for it!
 
 > [!TIP]
-> Google Authenticator ignores the algorithm type and uses `sha1` as the default.
+> Google Authenticator ignores the algorithm type and and defaults to `sha1`.
 
 ## License
 
