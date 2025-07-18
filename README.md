@@ -89,11 +89,11 @@ const keyUri = totp.keyUri({
 });
 ```
 
-The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like google authenticator.
+The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like Google Authenticator.
 You can use different values for options than those with which you initially configured a `TOTP` instance.
 
 > [!TIP]
-> You may want to generate and display a QR Code of the generated `keyUri` to allow authentication apps like Google Authenticator to scan it, eliminating the need for the user to manually enter the secret key.
+> You may want to generate and display a QR Code of the generated `keyUri` to allow users using authentication apps like Google Authenticator to scan it, eliminating the need for the user to manually enter the secret key.
 
 <a id="reference"><a>
 
@@ -119,7 +119,7 @@ const secret = new Secret();
 const secret = new Secret({ size: 20 });
 ```
 
-If you're unsure about the appropriate size and only know the algorithm you plan to use, call the for static method to get a Secret instance tailored for a specific [supported algorithm](#supported-algorithms).
+If you're unsure about the appropriate size and only know the algorithm you plan to use, call the `for` static method to get a Secret instance tailored for a specific [supported algorithm](#supported-algorithms).
 
 ```typescript
 const secret = Secret.for("sha512");
@@ -128,7 +128,7 @@ const secret = Secret.for("sha512");
 > [!NOTE]
 > XOTP uses `sha1` as the default algorithm for generating both `TOTP` and `HOTP` tokens.
 
-If you already have a secret key in binary, you can initialize a `Secret` instance using a native Buffer object or a JavaScript `ArrayBuffer`. For example:
+If you already have a secret key in binary, you can initialize a `Secret` instance using a native `Buffer` object or a JavaScript `ArrayBuffer`. For example:
 
 ```typescript
 // This defines a dummy buffer of random 42-byte binary.
@@ -152,16 +152,16 @@ You can also use `from` static method to get a `Secret` instance from a string i
 const secret = Secret.from("LBHVIUBAFBKE6VCQF5EE6VCQFE======", "base32");
 ```
 
-Almost all applications need to store the secret key to verify the user's token later. To do this, use the `toString` method to get the secret key in one of the [available encodings](#supported-encodings):
+Almost all applications need to store the secret key to generate and verify the user's token later. To do this, use the `toString` method to get the secret key in one of the [available encodings](#supported-encodings):
 
 ```typescript
 const secretKey = secret.toString("hex");
 ```
 
-The default encoding for `toString()` is `base32` because most authemtication apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
+The default encoding for `toString()` is `base32` because most authentication apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
 
 > [!NOTE]
-> The default encoding for the `from` method is `utf-8`, while the default encoding for `toString` is `base32`,Therefore, you need to pass the second argument in one of these two functions. This means:
+> The default encoding for the `from` method is `utf-8`, while the default encoding for `toString` is `base32`. Therefore, you need to pass the second argument in one of these two functions. This means:
 >
 > ```typescript
 > const base32SecretKey = secret.toString();
@@ -233,10 +233,10 @@ If you require an encoding not listed here, please let us know by opening an [is
 - `sha3-384`
 - `sha3-512`
 
-  If you need an algorithm that is not listed, please open an [issue][issues] for it!
+If you need an algorithm that is not listed, please open an [issue][issues] for it!
 
 > [!TIP]
-> Google Authenticator ignores the algorithm type and and defaults to `sha1`.
+> Google Authenticator ignores the algorithm type and defaults to `sha1`.
 
 ## License
 
