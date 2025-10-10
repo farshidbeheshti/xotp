@@ -80,7 +80,7 @@ This method returns `0` if the token is for the current time step, or `null` if 
 
 You can adjust the search window through the options passed to the method, or by modifying the default value in the options passed to the `TOTP` constructor. The default window value is `1`, meaning it checks one time step before and one time step after the current time step to see if the token was generated in any of those steps.
 
-## Google Authenticator Key URI
+## Key URI & QR Code Generation
 
 ```typescript
 const keyUri = totp.keyUri({
@@ -92,8 +92,117 @@ const keyUri = totp.keyUri({
 The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like Google Authenticator.
 You can use different values for options than those with which you initially configured a `TOTP` instance.
 
-> [!TIP]
-> You may want to generate and display a QR Code of the generated `keyUri` to allow users using authentication apps like Google Authenticator to scan it, eliminating the need for the user to manually enter the secret key.
+### Generating a QR Code
+
+The `keyUri` method returns a standard `otpauth://` URI, which can be encoded into QR codes for easy scanning by authenticator apps like Google Authenticator, Authy, or Microsoft Authenticator. While XOTP focuses on core OTP functionality and remains zero-dependency, you can pair it with a lightweight QR code library (such as qrcode) to create the QR image. This is ideal for user onboarding in 2FA/MFA flows, where users scan the QR to import the secret:
+
+#### Using the `qrcode` library
+
+First, install the QR code library:
+
+```bash
+npm install qrcode
+npm install @types/qrcode  # For TypeScript users
+```
+
+Then generate a QR code:
+
+```typescript
+import QRCode from "qrcode";
+import { Secret, TOTP } from "xotp";
+
+const secret = new Secret();
+const totp = new TOTP();
+
+const keyUri = totp.keyUri({
+  secret,
+  account: "<fullname, username or email>",
+  issuer: "MyApp",
+});
+
+// Generate QR code as Data URL (for web)
+const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+
+// Generate QR code as SVG string
+const qrCodeSVG = await QRCode.toString(keyUri, { type: "svg" });
+
+// Save QR code as PNG file
+await QRCode.toFile("qrcode.png", keyUri);
+```
+
+#### Using the `qr-image` library
+
+```bash
+npm install qr-image
+npm install @types/qr-image  # For TypeScript users
+```
+
+```typescript
+import qr from "qr-image";
+import fs from "fs";
+
+const keyUri = totp.keyUri({
+  secret,
+  account: "<fullname, username or email>",
+  issuer: "MyApp",
+});
+
+// Generate QR code as PNG buffer
+const qrPng = qr.image(keyUri, { type: "png" });
+qrPng.pipe(fs.createWriteStream("qrcode.png"));
+
+// Generate QR code as SVG string
+const qrSvg = qr.imageSync(keyUri, { type: "svg" });
+```
+
+#### Web Usage Example
+
+For web applications, you can display the QR code directly in the browser:
+
+```typescript
+// Generate QR code and display in HTML
+const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+const imgElement = document.createElement("img");
+imgElement.src = qrCodeDataURL;
+imgElement.alt = "QR Code for 2FA Setup";
+document.body.appendChild(imgElement);
+```
+
+#### Complete Setup Flow
+
+Here's a complete example for setting up 2FA with QR code:
+
+```typescript
+import { Secret, TOTP } from "xotp";
+import QRCode from "qrcode";
+
+async function setup2FA(userEmail: string) {
+  // Generate a new secret for the user
+  const secret = new Secret();
+  const totp = new TOTP();
+
+  // Create the key URI
+  const keyUri = totp.keyUri({
+    secret,
+    account: userEmail,
+    issuer: "MyApp",
+  });
+
+  // Generate QR code
+  const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+
+  // Store the secret securely in your database
+  const secretKey = secret.toString(); // base32 encoded
+
+  return {
+    secretKey, // Store this securely
+    qrCodeDataURL, // Show this to the user
+  };
+}
+```
+
+> [!CAUTION]
+> Always store the secret key securely and never expose it to the client-side after the initial setup.
 
 <a id="reference"><a>
 
