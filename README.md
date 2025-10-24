@@ -347,6 +347,14 @@ If you need an algorithm that is not listed, please open an [issue][issues] for 
 > [!TIP]
 > Google Authenticator ignores the algorithm type and defaults to `sha1`.
 
+## Contributing & Feature Requests
+
+XOTP thrives on community input! Got an idea that could make OTP handling even better?
+
+- [Open an issue](https://github.com/farshidbeheshti/xotp/issues) with your feature suggestion/request and we **will** provide feedback lightning-fast.
+
+Let's build the best OTP library together!
+
 ## License
 
 `XOTP` is [MIT licensed][project-license]
