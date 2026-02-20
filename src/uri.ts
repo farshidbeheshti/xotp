@@ -33,11 +33,11 @@ class URI {
     }
 
     const secret = Secret.from(secretParam, "base32");
-    const account = this.#parseLabel(label);
+    const { account, issuer: labelIssuer } = this.#parseLabel(label);
 
     const algorithm = this.#parseAlgorithm(params.get("algorithm"));
     const digits = this.#parseDigits(params.get("digits"));
-    const issuer = params.get("issuer") || undefined;
+    const issuer = params.get("issuer") || labelIssuer || undefined;
 
     if (type === "totp") {
       const duration = this.#parseDuration(params.get("period"));
@@ -58,10 +58,16 @@ class URI {
     }
   }
 
-  static #parseLabel(label: string): string {
+  static #parseLabel(label: string): { account: string; issuer?: string } {
     const decoded = decodeURIComponent(label);
     const colonIndex = decoded.indexOf(":");
-    return colonIndex !== -1 ? decoded.slice(colonIndex + 1) : decoded;
+    if (colonIndex !== -1) {
+      return {
+        issuer: decoded.slice(0, colonIndex),
+        account: decoded.slice(colonIndex + 1),
+      };
+    }
+    return { account: decoded };
   }
 
   static #parseAlgorithm(value: string | null): Algorithm | undefined {
