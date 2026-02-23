@@ -1,21 +1,5 @@
 import { Secret } from "./secret";
-import { Algorithm, HOTPOptions, TOTPOptions, URIOptions } from "./types";
-
-type ParsedTOTP = {
-  type: "totp";
-  secret: Secret;
-  account: string;
-  options: Partial<Omit<TOTPOptions, "account">>;
-};
-
-type ParsedHOTP = {
-  type: "hotp";
-  secret: Secret;
-  account: string;
-  options: Partial<Omit<HOTPOptions, "account">>;
-};
-
-type ParsedURI = ParsedTOTP | ParsedHOTP;
+import { Algorithm, HOTPOptions, TOTPOptions, URIOptions, ParsedURI } from "./types";
 
 class URI {
   static parse(uri: string): ParsedURI {
