@@ -1,5 +1,5 @@
 import { Secret } from "./secret";
-import { Algorithm, HOTPOptions, TOTPOptions, URIOptions } from "./types";
+import { Algorithm, HOTPOptions, TOTPOptions } from "./types";
 
 type ParsedTOTP = {
   type: "totp";
@@ -92,73 +92,6 @@ class URI {
     if (!value) return undefined;
     const parsed = parseInt(value, 10);
     return isNaN(parsed) ? undefined : parsed;
-  }
-
-  static generateURI(options: URIOptions): string {
-    const {
-      type,
-      secret,
-      account,
-      issuer,
-      algorithm = "sha1",
-      digits = 6,
-    } = options;
-
-    if (type === "totp") {
-      const { duration = 30 } = options;
-      return this.#generateURI({
-        type: "totp",
-        secret,
-        account,
-        issuer,
-        algorithm,
-        digits,
-        typeParam: { key: "period", value: duration },
-      });
-    } else {
-      const { counter = 0 } = options;
-      return this.#generateURI({
-        type: "hotp",
-        secret,
-        account,
-        issuer,
-        algorithm,
-        digits,
-        typeParam: { key: "counter", value: counter },
-      });
-    }
-  }
-
-  static #generateURI({
-    type,
-    secret,
-    account,
-    issuer,
-    algorithm,
-    digits,
-    typeParam,
-  }: {
-    type: "totp" | "hotp";
-    secret: Secret;
-    account: string;
-    issuer?: string;
-    algorithm: Algorithm;
-    digits: number;
-    typeParam: { key: "period" | "counter"; value: number };
-  }): string {
-    const encode = encodeURIComponent;
-    const params = [
-      `secret=${encode(secret.toString("base32").replace(/=+$/, ""))}`,
-      `algorithm=${encode(algorithm.toUpperCase())}`,
-      `digits=${encode(digits)}`,
-      `${typeParam.key}=${encode(typeParam.value)}`,
-    ];
-    let label = encode(account);
-    if (issuer) {
-      label = `${encode(issuer)}:${label}`;
-      params.push(`issuer=${encode(issuer)}`);
-    }
-    return `otpauth://${type}/${label}?${params.join("&")}`;
   }
 }
 

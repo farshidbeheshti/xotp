@@ -1,7 +1,6 @@
 import { TOTPOptions, Algorithm } from "@src/types";
 import { HOTP } from "./hotp";
 import { Secret } from "./secret";
-import { URI } from "./uri";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -172,15 +171,20 @@ class TOTP {
     duration?: number;
     digits?: number;
   }): string {
-    return URI.generateURI({
-      type: "totp",
-      secret,
-      account,
-      issuer,
-      algorithm,
-      digits,
-      duration,
-    });
+    const e = encodeURIComponent;
+
+    const params = [
+      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
+      `algorithm=${e(algorithm.toUpperCase())}`,
+      `digits=${e(digits)}`,
+      `period=${e(duration)}`,
+    ];
+    let label = account;
+    if (issuer) {
+      label = `${e(issuer)}:${e(label)}`;
+      params.push(`issuer=${e(issuer)}`);
+    }
+    return `otpauth://totp/${label}?${params.join("&")}`;
   }
 
   #calcHotpCounter({

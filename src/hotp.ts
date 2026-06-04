@@ -3,7 +3,6 @@ import { HOTPOptions, Algorithm } from "@src/types";
 import { uintEncode } from "./encoding";
 import { padStart } from "./utils";
 import { Secret } from "./secret";
-import { URI } from "./uri";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -157,15 +156,19 @@ class HOTP {
     counter?: number;
     digits?: number;
   }): string {
-    return URI.generateURI({
-      type: "hotp",
-      secret,
-      account,
-      issuer,
-      algorithm,
-      digits,
-      counter,
-    });
+    const e = encodeURIComponent;
+    const params = [
+      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
+      `algorithm=${e(algorithm.toUpperCase())}`,
+      `digits=${e(digits)}`,
+      `counter=${e(counter)}`,
+    ];
+    let label = account;
+    if (issuer) {
+      label = `${e(issuer)}:${e(label)}`;
+      params.push(`issuer=${e(issuer)}`);
+    }
+    return `otpauth://hotp/${label}?${params.join("&")}`;
   }
 }
 
