@@ -64,7 +64,7 @@ class URI {
     if (colonIndex !== -1) {
       return {
         issuer: decoded.slice(0, colonIndex),
-        account: decoded.slice(colonIndex + 1).trimStart(),
+        account: decoded.slice(colonIndex + 1),
       };
     }
     return { account: decoded };
