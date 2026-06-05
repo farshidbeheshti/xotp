@@ -13,3 +13,34 @@ describe("HOTP with RFC #4226 input/output data sets ", () => {
     },
   );
 });
+
+describe("instance secret", () => {
+  test("new HOTP() has no instance secret", () => {
+    const hotp = new HOTP();
+    expect(hotp.secret).toBeUndefined();
+  });
+
+  test("generate() throws when no instance secret and no arg", () => {
+    const hotp = new HOTP();
+    expect(() => hotp.generate()).toThrow(/Secret is required/);
+  });
+
+  test("generateSecret: true creates an instance secret", () => {
+    const hotp = new HOTP({ generateSecret: true });
+    expect(hotp.secret).toBeInstanceOf(Secret);
+    expect(() => hotp.generate()).not.toThrow();
+  });
+
+  test("HOTP.create() creates an instance secret", () => {
+    const hotp = HOTP.create();
+    expect(hotp.secret).toBeInstanceOf(Secret);
+    expect(() => hotp.generate()).not.toThrow();
+  });
+
+  test("bound instance generates RFC token without passing secret", () => {
+    const secretKey = Secret.from(secret, "ascii");
+    const hotp = new HOTP({ secret: secretKey });
+    const { counter, hotp: expected } = data[0];
+    expect(hotp.generate({ counter })).toBe(expected);
+  });
+});

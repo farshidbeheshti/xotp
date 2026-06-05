@@ -1,6 +1,7 @@
 import { TOTPOptions, Algorithm } from "@src/types";
 import { HOTP } from "./hotp";
 import { Secret } from "./secret";
+import { resolveSecret } from "./shared/resolveSecret";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -9,7 +10,9 @@ class TOTP {
   duration = this.defaults.duration;
   issuer = this.defaults.issuer;
   account = this.defaults.account;
+  #secret?: Secret;
   #hotp: HOTP;
+
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
@@ -17,6 +20,8 @@ class TOTP {
     digits = this.defaults.digits,
     issuer = this.defaults.issuer,
     account = this.defaults.account,
+    secret,
+    generateSecret = false,
   }: Partial<TOTPOptions> = {}) {
     this.algorithm = algorithm;
     this.digits = digits;
@@ -24,8 +29,22 @@ class TOTP {
     this.duration = duration;
     this.issuer = issuer;
     this.account = account;
+    if (secret) {
+      this.#secret = secret;
+    } else if (generateSecret) {
+      this.#secret = Secret.for(algorithm);
+    }
     this.#hotp = new HOTP({ algorithm, window, digits });
   }
+
+  get secret(): Secret | undefined {
+    return this.#secret;
+  }
+
+  static create(opts: Partial<TOTPOptions> = {}): TOTP {
+    return new TOTP({ ...opts, generateSecret: true });
+  }
+
   get defaults(): Readonly<TOTPOptions> {
     return Object.freeze<TOTPOptions>({
       algorithm: "sha1",
@@ -44,14 +63,15 @@ class TOTP {
     digits = this.digits,
     duration = this.duration,
   }: {
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-  }) {
+  } = {}) {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.generate({
-      secret,
+      secret: resolved,
       counter: this.#calcHotpCounter({ timestamp, duration }),
       algorithm,
       digits,
@@ -68,16 +88,17 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
     window?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.validate({
       token,
-      secret,
+      secret: resolved,
       counter: this.#calcHotpCounter({ timestamp, duration }),
       algorithm,
       digits,
@@ -95,16 +116,17 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
     window?: number;
   }): number | null {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.compare({
       token,
-      secret,
+      secret: resolved,
       window,
       algorithm,
       digits,
@@ -121,15 +143,16 @@ class TOTP {
     duration = this.duration,
   }: {
     token: string;
-    secret: Secret;
-    timestamp: number;
+    secret?: Secret;
+    timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
-    duration: number;
+    duration?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.equals({
       token,
-      secret,
+      secret: resolved,
       algorithm,
       digits,
       counter: this.#calcHotpCounter({ timestamp, duration }),
@@ -158,23 +181,24 @@ class TOTP {
 
   keyUri({
     secret,
-    account,
+    account = this.account,
     issuer = this.issuer,
     algorithm = this.algorithm,
     duration = this.duration,
     digits = this.digits,
   }: {
-    secret: Secret;
-    account: string;
+    secret?: Secret;
+    account?: string;
     issuer?: string;
     algorithm?: Algorithm;
     duration?: number;
     digits?: number;
-  }): string {
+  } = {}): string {
+    const resolved = resolveSecret(this.#secret, secret);
     const e = encodeURIComponent;
 
     const params = [
-      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
+      `secret=${e(resolved.toString("base32").replace(/=+$/, ""))}`,
       `algorithm=${e(algorithm.toUpperCase())}`,
       `digits=${e(digits)}`,
       `period=${e(duration)}`,

@@ -204,13 +204,13 @@ async function setup2FA(userEmail: string) {
 > [!CAUTION]
 > Always store the secret key securely and never expose it to the client-side after the initial setup.
 
-<a id="reference"><a>
+<a id="reference"></a>
 
 ## References
 
 ### Secret
 
-<a id="secret-reference"><a>
+<a id="secret-reference"></a>
 
 The `Secret` class allows you to generate and retrieve your secret keys in various encodings. Let's explore some of its key functions:
 
@@ -286,7 +286,7 @@ The default encoding for `toString()` is `base32` because most authentication ap
 >
 > We recommend the former!
 
-<a id="totp_options"><a>
+<a id="totp_options"></a>
 
 ### TOTP Options
 
@@ -297,17 +297,32 @@ The default encoding for `toString()` is `base32` because most authentication ap
 | window    | `number` | 1       | The number of window(s) within which to validate the token. If the token isn't validated in the current time step, XOTP attempts to validate it in the previous and future windows. |
 | duration  | `number` | 30      | The duration (in seconds) for which a token is valid.                                                                                                                               |
 | issuer    | `string` | "xotp"  | The provider or service associated with the token (e.g., "Github"). This is just a display field to display the issuer's name in authenticator apps like Google Authenticator.      |
-| account   | `string` |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
+| account         | `string`  |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
+| secret          | `Secret`  |         | Binds a secret to the instance. When set, `generate`, `validate`, and related methods can omit `secret` in each call.                                                                 |
+| generateSecret  | `boolean` | `false` | Set to `true` when enrolling new 2FA (no `secret` yet) so one random secret is created at construction — use `TOTP.create()` or persist `instance.secret`. Keep `false` (default) for server validators that pass each user's `secret` per call. |
+
+### Enrollment (bound instance)
+
+For new 2FA setup (CLI, client, or single-user flows), bind a secret to the instance:
+
+```typescript
+const totp = TOTP.create({ account: "user@example.com" });
+// or: new TOTP({ generateSecret: true, account: "user@example.com" });
+
+const token = totp.generate();
+const keyUri = totp.keyUri({ account: "user@example.com" });
+```
+
+Persist `totp.secret` before discarding the instance.
 
 > [!TIP]
-> XOTP accepts options that are **application-scoped** rather than user-specific. This means you typically only need a single instance of the `TOTP` or `HOTP` class, which you can reuse throughout your application.
-> That's why XOTP does not allow the secret key to be included in the options, to avoid the terrible security problems of using a shared secret key.
+> For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
 
 ### HOTP
 
 XOTP also supports HOTP. To use HOTP functions, simply replace "TOTP" with "HOTP" in the examples provided above. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
 
-<a id="supported_encodings"><a>
+<a id="supported_encodings"></a>
 
 ### Supported Encodings:
 
@@ -326,7 +341,7 @@ If you require an encoding not listed here, please let us know by opening an [is
 > [!TIP]
 > Google Authenticator uses `base32` encoding for the secret key!
 
-<a id="supported_algorithms"><a>
+<a id="supported_algorithms"></a>
 
 ### Supported Algorithms:
 
