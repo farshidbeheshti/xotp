@@ -82,8 +82,10 @@ You can adjust the search window through the options passed to the method, or by
 
 ## Key URI & QR Code Generation
 
+### Export (generate a key URI)
+
 ```typescript
-const keyUri = totp.keyUri({
+const keyUri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
 });
@@ -92,9 +94,42 @@ const keyUri = totp.keyUri({
 The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like Google Authenticator.
 You can use different values for options than those with which you initially configured a `TOTP` instance.
 
+### Import (parse an `otpauth://` URI)
+
+Import from a scanned QR code or pasted key URI:
+
+```typescript
+import { URI, TOTP, HOTP } from "xotp";
+
+const totp = TOTP.fromKeyUri(
+  "otpauth://totp/Issuer:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Issuer",
+);
+const token = totp.generate();
+const isValid = totp.validate({ token: "<USER_SUBMITTED_TOKEN>" });
+
+// Low-level parse / format
+const keyUri = URI.parse(uri);
+const uriAgain = URI.format(keyUri);
+if (keyUri.type === "totp") {
+  keyUri.secret;
+  keyUri.account;
+  keyUri.algorithm;
+}
+
+// Or build a Key URI without parsing
+const uri = URI.format({
+  type: "totp",
+  secret,
+  account: "user@example.com",
+  issuer: "MyApp",
+});
+```
+
+`HOTP.fromKeyUri(uri)` works the same for `otpauth://hotp/...` URIs. The imported instance binds `secret` from the URI so you do not pass `secret` on each call.
+
 ### Generating a QR Code
 
-The `keyUri` method returns a standard `otpauth://` URI, which can be encoded into QR codes for easy scanning by authenticator apps like Google Authenticator, Authy, or Microsoft Authenticator. While XOTP focuses on core OTP functionality and remains zero-dependency, you can pair it with a lightweight QR code library (such as qrcode) to create the QR image. This is ideal for user onboarding in 2FA/MFA flows, where users scan the QR to import the secret:
+The `toKeyUri` method returns a standard `otpauth://` URI, which can be encoded into QR codes for easy scanning by authenticator apps like Google Authenticator, Authy, or Microsoft Authenticator. While XOTP focuses on core OTP functionality and remains zero-dependency, you can pair it with a lightweight QR code library (such as qrcode) to create the QR image. This is ideal for user onboarding in 2FA/MFA flows, where users scan the QR to import the secret:
 
 #### Using the `qrcode` library
 
@@ -114,7 +149,7 @@ import { Secret, TOTP } from "xotp";
 const secret = new Secret();
 const totp = new TOTP();
 
-const keyUri = totp.keyUri({
+const keyUri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
   issuer: "MyApp",
@@ -141,7 +176,7 @@ npm install @types/qr-image  # For TypeScript users
 import qr from "qr-image";
 import fs from "fs";
 
-const keyUri = totp.keyUri({
+const keyUri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
   issuer: "MyApp",
@@ -182,7 +217,7 @@ async function setup2FA(userEmail: string) {
   const totp = new TOTP();
 
   // Create the key URI
-  const keyUri = totp.keyUri({
+  const keyUri = totp.toKeyUri({
     secret,
     account: userEmail,
     issuer: "MyApp",
@@ -310,7 +345,7 @@ const totp = TOTP.create({ account: "user@example.com" });
 // or: new TOTP({ generateSecret: true, account: "user@example.com" });
 
 const token = totp.generate();
-const keyUri = totp.keyUri({ account: "user@example.com" });
+const keyUri = totp.toKeyUri({ account: "user@example.com" });
 ```
 
 Persist `totp.secret` before discarding the instance.

@@ -4,6 +4,8 @@ import { uintEncode } from "./encoding";
 import { padStart } from "./utils";
 import { Secret } from "./secret";
 import { resolveSecret } from "./shared/resolveSecret";
+import { hotpDefaults } from "./shared/hotpDefaults";
+import { URI } from "./uri";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -45,15 +47,22 @@ class HOTP {
     return new HOTP({ ...opts, generateSecret: true });
   }
 
-  get defaults(): Readonly<HOTPOptions> {
-    return Object.freeze<HOTPOptions>({
-      algorithm: "sha1",
-      counter: 0,
-      digits: 6,
-      window: 1,
-      issuer: "xotp",
-      account: "",
+  static fromKeyUri(uri: string): HOTP {
+    const parsed = URI.parse(uri);
+    if (parsed.type !== "hotp") {
+      throw new TypeError("Expected HOTP key URI");
+    }
+    const { type: _type, secret, account, ...options } = parsed;
+    return new HOTP({
+      secret,
+      account,
+      ...options,
+      generateSecret: false,
     });
+  }
+
+  get defaults(): Readonly<HOTPOptions> {
+    return hotpDefaults;
   }
 
   generate({
@@ -176,7 +185,7 @@ class HOTP {
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 
-  keyUri({
+  toKeyUri({
     secret,
     account = this.account,
     issuer = this.issuer,
@@ -191,20 +200,29 @@ class HOTP {
     counter?: number;
     digits?: number;
   } = {}): string {
-    const resolved = resolveSecret(this.#secret, secret);
-    const e = encodeURIComponent;
-    const params = [
-      `secret=${e(resolved.toString("base32").replace(/=+$/, ""))}`,
-      `algorithm=${e(algorithm.toUpperCase())}`,
-      `digits=${e(digits)}`,
-      `counter=${e(counter)}`,
-    ];
-    let label = account;
-    if (issuer) {
-      label = `${e(issuer)}:${e(label)}`;
-      params.push(`issuer=${e(issuer)}`);
-    }
-    return `otpauth://hotp/${label}?${params.join("&")}`;
+    return URI.format({
+      type: "hotp",
+      secret: resolveSecret(this.#secret, secret),
+      account,
+      algorithm,
+      digits,
+      counter,
+      issuer,
+    });
+  }
+
+  /** @deprecated Use {@link HOTP.toKeyUri} instead. */
+  keyUri(
+    opts: {
+      secret?: Secret;
+      account?: string;
+      issuer?: string;
+      algorithm?: Algorithm;
+      counter?: number;
+      digits?: number;
+    } = {},
+  ): string {
+    return this.toKeyUri(opts);
   }
 }
 

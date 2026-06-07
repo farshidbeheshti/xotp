@@ -2,6 +2,8 @@ import { TOTPOptions, Algorithm } from "@src/types";
 import { HOTP } from "./hotp";
 import { Secret } from "./secret";
 import { resolveSecret } from "./shared/resolveSecret";
+import { totpDefaults } from "./shared/totpDefaults";
+import { URI } from "./uri";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -45,15 +47,22 @@ class TOTP {
     return new TOTP({ ...opts, generateSecret: true });
   }
 
-  get defaults(): Readonly<TOTPOptions> {
-    return Object.freeze<TOTPOptions>({
-      algorithm: "sha1",
-      duration: 30,
-      digits: 6,
-      window: 1,
-      issuer: "xotp",
-      account: "",
+  static fromKeyUri(uri: string): TOTP {
+    const parsed = URI.parse(uri);
+    if (parsed.type !== "totp") {
+      throw new TypeError("Expected TOTP key URI");
+    }
+    const { type: _type, secret, account, ...options } = parsed;
+    return new TOTP({
+      secret,
+      account,
+      ...options,
+      generateSecret: false,
     });
+  }
+
+  get defaults(): Readonly<TOTPOptions> {
+    return totpDefaults;
   }
 
   generate({
@@ -179,7 +188,7 @@ class TOTP {
     return duration - this.timeUsed({ timestamp, duration });
   }
 
-  keyUri({
+  toKeyUri({
     secret,
     account = this.account,
     issuer = this.issuer,
@@ -194,21 +203,29 @@ class TOTP {
     duration?: number;
     digits?: number;
   } = {}): string {
-    const resolved = resolveSecret(this.#secret, secret);
-    const e = encodeURIComponent;
+    return URI.format({
+      type: "totp",
+      secret: resolveSecret(this.#secret, secret),
+      account,
+      algorithm,
+      digits,
+      duration,
+      issuer,
+    });
+  }
 
-    const params = [
-      `secret=${e(resolved.toString("base32").replace(/=+$/, ""))}`,
-      `algorithm=${e(algorithm.toUpperCase())}`,
-      `digits=${e(digits)}`,
-      `period=${e(duration)}`,
-    ];
-    let label = account;
-    if (issuer) {
-      label = `${e(issuer)}:${e(label)}`;
-      params.push(`issuer=${e(issuer)}`);
-    }
-    return `otpauth://totp/${label}?${params.join("&")}`;
+  /** @deprecated Use {@link TOTP.toKeyUri} instead. */
+  keyUri(
+    opts: {
+      secret?: Secret;
+      account?: string;
+      issuer?: string;
+      algorithm?: Algorithm;
+      duration?: number;
+      digits?: number;
+    } = {},
+  ): string {
+    return this.toKeyUri(opts);
   }
 
   #calcHotpCounter({
