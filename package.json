@@ -27,8 +27,8 @@
     "test:coverage": "rimraf ./coverage & jest --coverage",
     "test": "jest",
     "test:smoke": "node tests/smoke/cjs.cjs && node tests/smoke/esm.mjs",
-    "test:smoke:consumer:cjs": "npm install --prefix tests/smoke/consumer && cd tests/smoke/consumer && node test-cjs.cjs",
-    "test:smoke:consumer:esm": "npm install --prefix tests/smoke/consumer && cd tests/smoke/consumer && node test-esm.mjs",
+    "test:smoke:consumer:cjs": "node scripts/test-smoke-consumer.mjs cjs",
+    "test:smoke:consumer:esm": "node scripts/test-smoke-consumer.mjs esm",
     "test:smoke:consumer": "npm run test:smoke:consumer:cjs && npm run test:smoke:consumer:esm"
   },
   "repository": {
