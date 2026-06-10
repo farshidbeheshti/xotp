@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { Algorithm, Encoding } from "./types/index";
-import { base32Decode, base32Encode } from "./encoding/index";
+import { Algorithm, Encoding } from "./types";
+import { base32Decode, base32Encode } from "./encoding";
 
 export class Secret {
   #buffer: Buffer;
