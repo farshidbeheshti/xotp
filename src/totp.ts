@@ -1,6 +1,9 @@
 import { TOTPOptions, Algorithm } from "@src/types";
 import { HOTP } from "./hotp";
 import { Secret } from "./secret";
+import { resolveSecret } from "./shared/resolveSecret";
+import { totpDefaults } from "./shared/totpDefaults";
+import { URI } from "./uri";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -9,7 +12,9 @@ class TOTP {
   duration = this.defaults.duration;
   issuer = this.defaults.issuer;
   account = this.defaults.account;
+  #secret?: Secret;
   #hotp: HOTP;
+
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
@@ -17,6 +22,8 @@ class TOTP {
     digits = this.defaults.digits,
     issuer = this.defaults.issuer,
     account = this.defaults.account,
+    secret,
+    generateSecret = false,
   }: Partial<TOTPOptions> = {}) {
     this.algorithm = algorithm;
     this.digits = digits;
@@ -24,17 +31,38 @@ class TOTP {
     this.duration = duration;
     this.issuer = issuer;
     this.account = account;
+    if (secret) {
+      this.#secret = secret;
+    } else if (generateSecret) {
+      this.#secret = Secret.for(algorithm);
+    }
     this.#hotp = new HOTP({ algorithm, window, digits });
   }
-  get defaults(): Readonly<TOTPOptions> {
-    return Object.freeze<TOTPOptions>({
-      algorithm: "sha1",
-      duration: 30,
-      digits: 6,
-      window: 1,
-      issuer: "xotp",
-      account: "",
+
+  get secret(): Secret | undefined {
+    return this.#secret;
+  }
+
+  static create(opts: Partial<TOTPOptions> = {}): TOTP {
+    return new TOTP({ ...opts, generateSecret: true });
+  }
+
+  static fromKeyUri(uri: string): TOTP {
+    const parsed = URI.parse(uri);
+    if (parsed.type !== "totp") {
+      throw new TypeError("Expected TOTP key URI");
+    }
+    const { type: _type, secret, account, ...options } = parsed;
+    return new TOTP({
+      secret,
+      account,
+      ...options,
+      generateSecret: false,
     });
+  }
+
+  get defaults(): Readonly<TOTPOptions> {
+    return totpDefaults;
   }
 
   generate({
@@ -44,14 +72,15 @@ class TOTP {
     digits = this.digits,
     duration = this.duration,
   }: {
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-  }) {
+  } = {}) {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.generate({
-      secret,
+      secret: resolved,
       counter: this.#calcHotpCounter({ timestamp, duration }),
       algorithm,
       digits,
@@ -68,16 +97,17 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
     window?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.validate({
       token,
-      secret,
+      secret: resolved,
       counter: this.#calcHotpCounter({ timestamp, duration }),
       algorithm,
       digits,
@@ -95,16 +125,17 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
     window?: number;
   }): number | null {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.compare({
       token,
-      secret,
+      secret: resolved,
       window,
       algorithm,
       digits,
@@ -121,15 +152,16 @@ class TOTP {
     duration = this.duration,
   }: {
     token: string;
-    secret: Secret;
-    timestamp: number;
+    secret?: Secret;
+    timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
-    duration: number;
+    duration?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.equals({
       token,
-      secret,
+      secret: resolved,
       algorithm,
       digits,
       counter: this.#calcHotpCounter({ timestamp, duration }),
@@ -156,35 +188,44 @@ class TOTP {
     return duration - this.timeUsed({ timestamp, duration });
   }
 
-  keyUri({
+  toKeyUri({
     secret,
-    account,
+    account = this.account,
     issuer = this.issuer,
     algorithm = this.algorithm,
     duration = this.duration,
     digits = this.digits,
   }: {
-    secret: Secret;
-    account: string;
+    secret?: Secret;
+    account?: string;
     issuer?: string;
     algorithm?: Algorithm;
     duration?: number;
     digits?: number;
-  }): string {
-    const e = encodeURIComponent;
+  } = {}): string {
+    return URI.format({
+      type: "totp",
+      secret: resolveSecret(this.#secret, secret),
+      account,
+      algorithm,
+      digits,
+      duration,
+      issuer,
+    });
+  }
 
-    const params = [
-      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
-      `algorithm=${e(algorithm.toUpperCase())}`,
-      `digits=${e(digits)}`,
-      `period=${e(duration)}`,
-    ];
-    let label = account;
-    if (issuer) {
-      label = `${e(issuer)}:${e(label)}`;
-      params.push(`issuer=${e(issuer)}`);
-    }
-    return `otpauth://totp/${label}?${params.join("&")}`;
+  /** @deprecated Use {@link TOTP.toKeyUri} instead. */
+  keyUri(
+    opts: {
+      secret?: Secret;
+      account?: string;
+      issuer?: string;
+      algorithm?: Algorithm;
+      duration?: number;
+      digits?: number;
+    } = {},
+  ): string {
+    return this.toKeyUri(opts);
   }
 
   #calcHotpCounter({

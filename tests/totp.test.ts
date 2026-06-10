@@ -47,3 +47,54 @@ describe("RFC #6238 Test Vectors", () => {
     },
   );
 });
+
+describe("instance secret", () => {
+  test("new TOTP() has no instance secret", () => {
+    const totp = new TOTP();
+    expect(totp.secret).toBeUndefined();
+  });
+
+  test("generate() throws when no instance secret and no arg", () => {
+    const totp = new TOTP();
+    expect(() => totp.generate()).toThrow(/Secret is required/);
+  });
+
+  test("generateSecret: true creates an instance secret", () => {
+    const totp = new TOTP({ generateSecret: true });
+    expect(totp.secret).toBeInstanceOf(Secret);
+    expect(() => totp.generate()).not.toThrow();
+  });
+
+  test("TOTP.create() creates an instance secret", () => {
+    const totp = TOTP.create();
+    expect(totp.secret).toBeInstanceOf(Secret);
+    expect(() => totp.generate()).not.toThrow();
+  });
+
+  test("explicit secret takes precedence over generateSecret", () => {
+    const secretKey = Secret.from("test", "ascii");
+    const totp = new TOTP({ secret: secretKey, generateSecret: true });
+    expect(totp.secret).toBe(secretKey);
+  });
+
+  test("method secret overrides instance secret", () => {
+    const totp = new TOTP({ generateSecret: true });
+    const { timestamp, mode, totp: expected } = data[0];
+    const other = Secret.from(secret[mode], "ascii");
+    const token = totp.generate({
+      secret: other,
+      timestamp: timestamp * 1000,
+      algorithm: mode,
+      digits: 8,
+      duration,
+    });
+    expect(token).toBe(expected);
+  });
+
+  test("bound instance validates without passing secret", () => {
+    const secretKey = Secret.from(secret.sha1, "ascii");
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    const { timestamp, totp: token } = data[0];
+    expect(totp.validate({ token, timestamp: timestamp * 1000 })).toBe(true);
+  });
+});

@@ -3,6 +3,9 @@ import { HOTPOptions, Algorithm } from "@src/types";
 import { uintEncode } from "./encoding";
 import { padStart } from "./utils";
 import { Secret } from "./secret";
+import { resolveSecret } from "./shared/resolveSecret";
+import { hotpDefaults } from "./shared/hotpDefaults";
+import { URI } from "./uri";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -11,6 +14,8 @@ class HOTP {
   window = this.defaults.window;
   issuer = this.defaults.issuer;
   account = this.defaults.account;
+  #secret?: Secret;
+
   constructor({
     algorithm = this.defaults.algorithm,
     window = this.defaults.window,
@@ -18,6 +23,8 @@ class HOTP {
     digits = this.defaults.digits,
     issuer = this.defaults.issuer,
     account = this.defaults.account,
+    secret,
+    generateSecret = false,
   }: Partial<HOTPOptions> = {}) {
     this.digits = digits;
     this.algorithm = algorithm;
@@ -25,17 +32,37 @@ class HOTP {
     this.counter = counter;
     this.issuer = issuer;
     this.account = account;
+    if (secret) {
+      this.#secret = secret;
+    } else if (generateSecret) {
+      this.#secret = Secret.for(algorithm);
+    }
+  }
+
+  get secret(): Secret | undefined {
+    return this.#secret;
+  }
+
+  static create(opts: Partial<HOTPOptions> = {}): HOTP {
+    return new HOTP({ ...opts, generateSecret: true });
+  }
+
+  static fromKeyUri(uri: string): HOTP {
+    const parsed = URI.parse(uri);
+    if (parsed.type !== "hotp") {
+      throw new TypeError("Expected HOTP key URI");
+    }
+    const { type: _type, secret, account, ...options } = parsed;
+    return new HOTP({
+      secret,
+      account,
+      ...options,
+      generateSecret: false,
+    });
   }
 
   get defaults(): Readonly<HOTPOptions> {
-    return Object.freeze<HOTPOptions>({
-      algorithm: "sha1",
-      counter: 0,
-      digits: 6,
-      window: 1,
-      issuer: "xotp",
-      account: "",
-    });
+    return hotpDefaults;
   }
 
   generate({
@@ -44,12 +71,13 @@ class HOTP {
     algorithm = this.algorithm,
     digits = this.digits,
   }: {
-    secret: Secret;
+    secret?: Secret;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
-  }) {
-    const digest = createHmac(algorithm, secret.buffer)
+  } = {}) {
+    const resolved = resolveSecret(this.#secret, secret);
+    const digest = createHmac(algorithm, resolved.buffer)
       .update(uintEncode(counter))
       .digest();
 
@@ -72,16 +100,17 @@ class HOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
     window?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     return (
       this.compare({
         token,
-        secret,
+        secret: resolved,
         counter,
         digits,
         algorithm,
@@ -99,20 +128,34 @@ class HOTP {
     window = this.window,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     counter?: number;
     digits?: number;
     algorithm?: Algorithm;
     window?: number;
   }): number | null {
-    if (this.equals({ token, secret, counter, digits, algorithm })) return 0;
+    const resolved = resolveSecret(this.#secret, secret);
+    if (this.equals({ token, secret: resolved, counter, digits, algorithm }))
+      return 0;
     for (let i = 1; i <= window; i++) {
       if (
-        this.equals({ token, secret, counter: counter + i, digits, algorithm })
+        this.equals({
+          token,
+          secret: resolved,
+          counter: counter + i,
+          digits,
+          algorithm,
+        })
       )
         return i;
       if (
-        this.equals({ token, secret, counter: counter - i, digits, algorithm })
+        this.equals({
+          token,
+          secret: resolved,
+          counter: counter - i,
+          digits,
+          algorithm,
+        })
       )
         return -i;
     }
@@ -127,13 +170,14 @@ class HOTP {
     digits = this.digits,
   }: {
     token: string;
-    secret: Secret;
+    secret?: Secret;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
   }): boolean {
+    const resolved = resolveSecret(this.#secret, secret);
     const generatedToken = this.generate({
-      secret,
+      secret: resolved,
       counter,
       algorithm,
       digits,
@@ -141,34 +185,44 @@ class HOTP {
     return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
   }
 
-  keyUri({
+  toKeyUri({
     secret,
-    account,
+    account = this.account,
     issuer = this.issuer,
     algorithm = this.algorithm,
     counter = this.counter,
     digits = this.digits,
   }: {
-    secret: Secret;
-    account: string;
+    secret?: Secret;
+    account?: string;
     issuer?: string;
     algorithm?: Algorithm;
     counter?: number;
     digits?: number;
-  }): string {
-    const e = encodeURIComponent;
-    const params = [
-      `secret=${e(secret.toString("base32").replace(/=+$/, ""))}`,
-      `algorithm=${e(algorithm.toUpperCase())}`,
-      `digits=${e(digits)}`,
-      `counter=${e(counter)}`,
-    ];
-    let label = account;
-    if (issuer) {
-      label = `${e(issuer)}:${e(label)}`;
-      params.push(`issuer=${e(issuer)}`);
-    }
-    return `otpauth://hotp/${label}?${params.join("&")}`;
+  } = {}): string {
+    return URI.format({
+      type: "hotp",
+      secret: resolveSecret(this.#secret, secret),
+      account,
+      algorithm,
+      digits,
+      counter,
+      issuer,
+    });
+  }
+
+  /** @deprecated Use {@link HOTP.toKeyUri} instead. */
+  keyUri(
+    opts: {
+      secret?: Secret;
+      account?: string;
+      issuer?: string;
+      algorithm?: Algorithm;
+      counter?: number;
+      digits?: number;
+    } = {},
+  ): string {
+    return this.toKeyUri(opts);
   }
 }
 
