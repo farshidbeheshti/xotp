@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: unit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: node
+            format: cjs
+            command: node tests/smoke/cjs.cjs
+          - runtime: node
+            format: esm
+            command: node tests/smoke/esm.mjs
+          - runtime: bun
+            format: cjs
+            command: bun tests/smoke/cjs.cjs
+          - runtime: bun
+            format: esm
+            command: bun tests/smoke/esm.mjs
+          - runtime: deno
+            format: esm
+            command: deno run --allow-read tests/smoke/esm.mjs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+        if: matrix.runtime == 'bun'
+      - uses: denoland/setup-deno@v2
+        if: matrix.runtime == 'deno'
+      - run: npm ci
+      - run: npm run build
+      - run: ${{ matrix.command }}
+
+  consumer:
+    runs-on: ubuntu-latest
+    needs: unit
+    strategy:
+      matrix:
+        format: [cjs, esm]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:smoke:consumer:${{ matrix.format }}
