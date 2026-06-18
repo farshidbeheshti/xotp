@@ -23,7 +23,7 @@ You can try XOTP with the demo available at [xotp.dev][demo]!
 ## Table of contents
 
 - [Installation](#installation)
-- [What's new in 1.1.0](#whats-new-in-110)
+- [Try it](#try-it)
 - [Quick start](#quick-start)
 - [Enrollment (bound instance)](#enrollment-bound-instance)
 - [Usage](#usage)
@@ -43,59 +43,66 @@ bun add xotp
 deno add npm:xotp
 ```
 
-## What's new in 1.1.0
+## Try it
 
-- **Bound instance secret** — pass `{ secret }` to the constructor, or `{ generateSecret: true }` / `TOTP.create()` to generate one at construction.
-- **Key URI import/export** — `TOTP.fromKeyUri()` / `HOTP.fromKeyUri()` and `toKeyUri()` (replaces deprecated `keyUri()`).
-- **Low-level URI helpers** — `URI.parse()` and `URI.format()` for `otpauth://` strings and `KeyUri` objects.
+Copy into `try.mjs` and run `node try.mjs` (or `bun try.mjs`):
 
-`generateSecret` defaults to `false` so existing server validators keep passing `secret` per call. For enrollment, use `TOTP.create()` or `{ generateSecret: true }`. In v2, `generateSecret` will default to `true`; pin `{ generateSecret: false }` if you rely on the current default.
+```javascript
+import { Secret, TOTP } from "xotp";
+
+const secret = Secret.from("JBSWY3DPEHPK3PXP", "base32");
+const totp = new TOTP();
+
+const token = totp.generate({ secret });
+const ok = totp.validate({ secret, token });
+
+console.log({ token, ok }); // { token: '...', ok: true }
+```
+
+No install? Try the live demo at [xotp.dev][demo].
 
 ## Quick start
 
-Pick the pattern that matches your use case:
-
 ### Server-side validation
 
-Use a shared `TOTP` instance without a bound secret. Pass each user's secret on every call (API login, multi-tenant apps):
+Shared `TOTP` engine; pass each user's secret per call (API login, multi-tenant apps):
 
 ```typescript
-import { TOTP } from "xotp";
+import { Secret, TOTP } from "xotp";
 
+const secret = Secret.from("JBSWY3DPEHPK3PXP", "base32");
 const totp = new TOTP();
-totp.validate({ secret: userSecret, token });
+
+const token = totp.generate({ secret });
+totp.validate({ secret, token }); // true
 ```
 
-See [Usage](#usage) below for secret handling, generation, and token delta.
+See [Usage](#usage) for secret storage, options, and token delta.
 
 ### Enrollment
 
-Generate a secret and key URI for one user (2FA setup, QR onboarding):
+Generate a secret and `otpauth://` URI for one user (2FA setup, QR onboarding):
 
 ```typescript
 import { TOTP } from "xotp";
 
 const totp = TOTP.create({ account: "user@example.com", issuer: "MyApp" });
-const uri = totp.toKeyUri(); // otpauth://... — encode as QR for the user
+
+console.log(totp.toKeyUri());
+console.log(totp.secret!.toString()); // base32 — persist before discarding the instance
 ```
 
-Persist `totp.secret` before discarding the instance. See [Enrollment (bound instance)](#enrollment-bound-instance) and [Key URI & QR Code Generation](#key-uri--qr-code-generation) for more detail.
+See [Enrollment (bound instance)](#enrollment-bound-instance) and [Key URI & QR Code Generation](#key-uri--qr-code-generation).
 
 ## Enrollment (bound instance)
 
-For new 2FA setup (CLI, client, or single-user flows), bind a secret to the instance:
+`TOTP.create({ account, issuer })` binds a generated secret to the instance — use it for enrollment flows. Equivalent:
 
 ```typescript
-import { TOTP } from "xotp";
-
-const totp = TOTP.create({ account: "user@example.com", issuer: "MyApp" });
-// or: new TOTP({ generateSecret: true, account: "user@example.com", issuer: "MyApp" });
-
-const token = totp.generate();
-const uri = totp.toKeyUri();
+new TOTP({ generateSecret: true, account: "user@example.com", issuer: "MyApp" });
 ```
 
-Persist `totp.secret` before discarding the instance.
+After `generate()` or `toKeyUri()`, persist `totp.secret` (e.g. `totp.secret!.toString()` for base32 storage).
 
 > [!TIP]
 > For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
