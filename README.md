@@ -15,11 +15,36 @@ XOTP implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP)
 
 You can try XOTP with the demo available at [xotp.dev][demo]!
 
+## Table of contents
+
+- [Installation](#installation)
+- [What's new in 1.1.0](#whats-new-in-110)
+- [Quick start](#quick-start)
+- [Enrollment (bound instance)](#enrollment-bound-instance)
+- [Usage](#usage)
+- [Key URI & QR Code Generation](#key-uri--qr-code-generation)
+- [References](#references)
+  - [Secret](#secret)
+  - [TOTP Options](#totp-options)
+  - [HOTP](#hotp)
+  - [Supported Encodings](#supported-encodings)
+  - [Supported Algorithms](#supported-algorithms)
+
 ## Installation
 
-```
+```bash
 npm i xotp
+bun add xotp
+deno add npm:xotp
 ```
+
+## What's new in 1.1.0
+
+- **Bound instance secret** — pass `{ secret }` to the constructor, or `{ generateSecret: true }` / `TOTP.create()` to generate one at construction.
+- **Key URI import/export** — `TOTP.fromKeyUri()` / `HOTP.fromKeyUri()` and `toKeyUri()` (replaces deprecated `keyUri()`).
+- **Low-level URI helpers** — `URI.parse()` and `URI.format()` for `otpauth://` strings and `KeyUri` objects.
+
+`generateSecret` defaults to `false` so existing server validators keep passing `secret` per call. For enrollment, use `TOTP.create()` or `{ generateSecret: true }`. In v2, `generateSecret` will default to `true`; pin `{ generateSecret: false }` if you rely on the current default.
 
 ## Quick start
 
@@ -133,15 +158,18 @@ You can adjust the search window through the options passed to the method, or by
 
 ### Export (generate a key URI)
 
+`toKeyUri()` returns an `otpauth://` URI **string**. For a structured object, use `URI.parse()` (see Import below).
+
 ```typescript
 const uri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
+  issuer: "MyApp", // default is "xotp" if omitted
 });
 ```
 
-The `account` is the name of the user for whom the OTP is created. It is just a display field used to show the user in authentication apps like Google Authenticator.
-You can use different values for options than those with which you initially configured a `TOTP` instance.
+The `account` and `issuer` fields are display labels shown in authenticator apps like Google Authenticator.
+You can override options per call even when they differ from the `TOTP` instance defaults.
 
 ### Import (parse an `otpauth://` URI)
 
@@ -179,119 +207,82 @@ const uri = URI.format({
 
 ### Generating a QR Code
 
-The `toKeyUri` method returns a standard `otpauth://` URI, which can be encoded into QR codes for easy scanning by authenticator apps like Google Authenticator, Authy, or Microsoft Authenticator. While XOTP focuses on core OTP functionality and remains zero-dependency, you can pair it with a lightweight QR code library (such as qrcode) to create the QR image. This is ideal for user onboarding in 2FA/MFA flows, where users scan the QR to import the secret:
-
-#### Using the `qrcode` library
-
-First, install the QR code library:
+The `toKeyUri` method returns a standard `otpauth://` URI string, which you can encode into a QR code for authenticator apps. XOTP stays zero-dependency — pair it with a QR library such as [`qrcode`](https://www.npmjs.com/package/qrcode):
 
 ```bash
 npm install qrcode
-npm install @types/qrcode  # For TypeScript users
+npm install @types/qrcode  # TypeScript
 ```
-
-Then generate a QR code:
 
 ```typescript
 import QRCode from "qrcode";
-import { Secret, TOTP } from "xotp";
+import { TOTP } from "xotp";
 
-const secret = new Secret();
-const totp = new TOTP();
-
-const uri = totp.toKeyUri({
-  secret,
-  account: "<fullname, username or email>",
+const totp = TOTP.create({
+  account: "user@example.com",
   issuer: "MyApp",
 });
 
-// Generate QR code as Data URL (for web)
-const qrCodeDataURL = await QRCode.toDataURL(uri);
-
-// Generate QR code as SVG string
-const qrCodeSVG = await QRCode.toString(uri, { type: "svg" });
-
-// Save QR code as PNG file
-await QRCode.toFile("qrcode.png", uri);
+const uri = totp.toKeyUri();
+const qrCodeDataURL = await QRCode.toDataURL(uri); // web <img src="...">
+await QRCode.toFile("qrcode.png", uri); // or save to disk
 ```
 
-#### Using the `qr-image` library
-
-```bash
-npm install qr-image
-npm install @types/qr-image  # For TypeScript users
-```
+#### Complete setup flow
 
 ```typescript
-import qr from "qr-image";
-import fs from "fs";
-
-const uri = totp.toKeyUri({
-  secret,
-  account: "<fullname, username or email>",
-  issuer: "MyApp",
-});
-
-// Generate QR code as PNG buffer
-const qrPng = qr.image(uri, { type: "png" });
-qrPng.pipe(fs.createWriteStream("qrcode.png"));
-
-// Generate QR code as SVG string
-const qrSvg = qr.imageSync(uri, { type: "svg" });
-```
-
-#### Web Usage Example
-
-For web applications, you can display the QR code directly in the browser:
-
-```typescript
-// Generate QR code and display in HTML
-const qrCodeDataURL = await QRCode.toDataURL(uri);
-const imgElement = document.createElement("img");
-imgElement.src = qrCodeDataURL;
-imgElement.alt = "QR Code for 2FA Setup";
-document.body.appendChild(imgElement);
-```
-
-#### Complete Setup Flow
-
-Here's a complete example for setting up 2FA with QR code:
-
-```typescript
-import { Secret, TOTP } from "xotp";
+import { TOTP } from "xotp";
 import QRCode from "qrcode";
 
 async function setup2FA(userEmail: string) {
-  // Generate a new secret for the user
-  const secret = new Secret();
-  const totp = new TOTP();
-
-  // Create the key URI
-  const uri = totp.toKeyUri({
-    secret,
-    account: userEmail,
-    issuer: "MyApp",
-  });
-
-  // Generate QR code
+  const totp = TOTP.create({ account: userEmail, issuer: "MyApp" });
+  const uri = totp.toKeyUri();
   const qrCodeDataURL = await QRCode.toDataURL(uri);
+  const secretKey = totp.secret!.toString(); // base32 — store securely
 
-  // Store the secret securely in your database
-  const secretKey = secret.toString(); // base32 encoded
-
-  return {
-    secretKey, // Store this securely
-    qrCodeDataURL, // Show this to the user
-  };
+  return { secretKey, qrCodeDataURL };
 }
 ```
 
 > [!CAUTION]
 > Always store the secret key securely and never expose it to the client-side after the initial setup.
 
+<details>
+<summary>More QR options (<code>qr-image</code>, in-browser display)</summary>
+
+**`qr-image`**
+
+```bash
+npm install qr-image
+npm install @types/qr-image  # TypeScript
+```
+
+```typescript
+import qr from "qr-image";
+import fs from "fs";
+
+const uri = totp.toKeyUri();
+qr.image(uri, { type: "png" }).pipe(fs.createWriteStream("qrcode.png"));
+const qrSvg = qr.imageSync(uri, { type: "svg" });
+```
+
+**In-browser display**
+
+```typescript
+const qrCodeDataURL = await QRCode.toDataURL(uri);
+const img = document.createElement("img");
+img.src = qrCodeDataURL;
+img.alt = "QR Code for 2FA Setup";
+document.body.appendChild(img);
+```
+
+</details>
+
 <a id="reference"></a>
 
 ## References
+
+Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, option types). Full signatures ship in `dist/index.d.ts`.
 
 ### Secret
 
@@ -388,7 +379,34 @@ The default encoding for `toString()` is `base32` because most authentication ap
 
 ### HOTP
 
-XOTP also supports HOTP. To use HOTP functions, simply replace "TOTP" with "HOTP" in the examples provided above. Depending on your requirements, you may need to replace the `timestamp` argument with the `counter` if you are not using its functions with default arguments.
+XOTP also supports [RFC 4226][rfc-4226] HOTP (counter-based OTP). Unlike TOTP, HOTP uses a `counter` instead of a time step — pass `counter` to `generate` and `validate`.
+
+```typescript
+import { HOTP, Secret } from "xotp";
+
+const hotp = new HOTP();
+const secret = Secret.from("<YOUR_SECRET_KEY>", "base32");
+
+const token = hotp.generate({ secret, counter: 0 });
+const isValid = hotp.validate({ secret, token, counter: 0 });
+```
+
+Enrollment and key URIs work the same as TOTP: `HOTP.create()`, `HOTP.fromKeyUri()`, and `hotp.toKeyUri()`. HOTP key URIs require a `counter` query parameter.
+
+When a bound `HOTP` instance generates without an explicit `counter`, the instance counter increments automatically.
+
+#### HOTP Options
+
+| Option         | Type      | Default | Description                                                                                                                                                                         |
+| -------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| algorithm      | `string`  | "sha1"  | HMAC algorithm; see [supported algorithms](#supported-algorithms).                                                                                                                  |
+| digits         | `number`  | 6       | Token length (6 or 8).                                                                                                                                                              |
+| window         | `number`  | 1       | Counter values before/after the expected counter to accept during validation.                                                                                                       |
+| counter        | `number`  | 0       | Current counter value. Required in HOTP key URIs.                                                                                                                                   |
+| issuer         | `string`  | "xotp"  | Display label for the service name in authenticator apps.                                                                                                                           |
+| account        | `string`  |         | Display label for the user (e.g. email).                                                                                                                                            |
+| secret         | `Secret`  |         | Binds a secret to the instance so methods can omit `secret` per call.                                                                                                               |
+| generateSecret | `boolean` | `false` | Set to `true` for enrollment, or use `HOTP.create()`. Keep `false` for shared server validators.                                                                                  |
 
 <a id="supported_encodings"></a>
 
