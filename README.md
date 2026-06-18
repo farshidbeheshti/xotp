@@ -18,7 +18,10 @@
 
 XOTP implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP) and has been fully tested against the test vectors provided in their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset].
 
-You can try XOTP with the demo available at [xotp.dev][demo]!
+
+> [!TIP]
+> You can try XOTP with the demo available at [xotp.dev][demo]!
+>
 
 ## Table of contents
 
@@ -43,9 +46,14 @@ bun add xotp
 deno add npm:xotp
 ```
 
-## Try it
+Works with both `import` (ESM) and `require()` (CommonJS):
 
-Copy into `try.mjs` and run `node try.mjs` (or `bun try.mjs`):
+```javascript
+import { TOTP } from "xotp";
+// or: const { TOTP } = require("xotp");
+```
+
+## Try it
 
 ```javascript
 import { Secret, TOTP } from "xotp";
