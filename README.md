@@ -49,7 +49,26 @@ const totp = TOTP.create({ account: "user@example.com", issuer: "MyApp" });
 const uri = totp.toKeyUri(); // otpauth://... — encode as QR for the user
 ```
 
-Persist `totp.secret` before discarding the instance. See [Key URI & QR Code Generation](#key-uri--qr-code-generation) and [Enrollment (bound instance)](#enrollment-bound-instance).
+Persist `totp.secret` before discarding the instance. See [Enrollment (bound instance)](#enrollment-bound-instance) and [Key URI & QR Code Generation](#key-uri--qr-code-generation) for more detail.
+
+## Enrollment (bound instance)
+
+For new 2FA setup (CLI, client, or single-user flows), bind a secret to the instance:
+
+```typescript
+import { TOTP } from "xotp";
+
+const totp = TOTP.create({ account: "user@example.com", issuer: "MyApp" });
+// or: new TOTP({ generateSecret: true, account: "user@example.com", issuer: "MyApp" });
+
+const token = totp.generate();
+const uri = totp.toKeyUri();
+```
+
+Persist `totp.secret` before discarding the instance.
+
+> [!TIP]
+> For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
 
 ## Usage
 
@@ -366,23 +385,6 @@ The default encoding for `toString()` is `base32` because most authentication ap
 | account         | `string`  |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
 | secret          | `Secret`  |         | Binds a secret to the instance. When set, `generate`, `validate`, and related methods can omit `secret` in each call.                                                                 |
 | generateSecret  | `boolean` | `false` | Set to `true` when enrolling new 2FA (no `secret` yet) so one random secret is created at construction — use `TOTP.create()` or persist `instance.secret`. Keep `false` (default) for server validators that pass each user's `secret` per call. |
-
-### Enrollment (bound instance)
-
-For new 2FA setup (CLI, client, or single-user flows), bind a secret to the instance:
-
-```typescript
-const totp = TOTP.create({ account: "user@example.com" });
-// or: new TOTP({ generateSecret: true, account: "user@example.com" });
-
-const token = totp.generate();
-const uri = totp.toKeyUri({ account: "user@example.com" });
-```
-
-Persist `totp.secret` before discarding the instance.
-
-> [!TIP]
-> For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
 
 ### HOTP
 
