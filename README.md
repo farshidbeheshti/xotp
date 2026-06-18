@@ -108,13 +108,14 @@ const token = totp.generate();
 const isValid = totp.validate({ token: "<USER_SUBMITTED_TOKEN>" });
 
 // Low-level parse / format
-const keyUri = URI.parse(uri);
+const scannedUri =
+  "otpauth://totp/Issuer:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Issuer";
+const keyUri = URI.parse(scannedUri);
 const uriAgain = URI.format(keyUri);
-if (keyUri.type === "totp") {
-  keyUri.secret;
-  keyUri.account;
-  keyUri.algorithm;
-}
+const otp =
+  keyUri.type === "totp"
+    ? TOTP.fromKeyUri(scannedUri)
+    : HOTP.fromKeyUri(scannedUri);
 
 // Or build a Key URI without parsing
 const uri = URI.format({
