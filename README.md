@@ -3,9 +3,14 @@
 </p>
 <h1 align="center">XOTP</h1>
 
-[![Github Release](https://img.shields.io/github/v/release/farshidbeheshti/xotp)](https://www.npmjs.com/package/xotp)
-[![NPM Downloads](https://img.shields.io/npm/d18m/xotp)](https://www.npmjs.com/package/xotp)
+[![npm version](https://img.shields.io/npm/v/xotp)](https://www.npmjs.com/package/xotp)
+[![CI](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml/badge.svg)](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/farshidbeheshti/xotp)](https://github.com/farshidbeheshti/xotp/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white)](https://github.com/farshidbeheshti/xotp)
+[![demo](https://img.shields.io/badge/demo-xotp.dev-026dfd)](https://xotp.dev)
+
+[![npm downloads](https://img.shields.io/npm/dm/xotp)](https://www.npmjs.com/package/xotp)
+[![runtimes](https://img.shields.io/badge/runtimes-Node%20%7C%20Bun%20%7C%20Deno-blue)](#installation)
 
 ## Description
 
