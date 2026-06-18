@@ -85,7 +85,7 @@ You can adjust the search window through the options passed to the method, or by
 ### Export (generate a key URI)
 
 ```typescript
-const keyUri = totp.toKeyUri({
+const uri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
 });
@@ -150,20 +150,20 @@ import { Secret, TOTP } from "xotp";
 const secret = new Secret();
 const totp = new TOTP();
 
-const keyUri = totp.toKeyUri({
+const uri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
   issuer: "MyApp",
 });
 
 // Generate QR code as Data URL (for web)
-const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+const qrCodeDataURL = await QRCode.toDataURL(uri);
 
 // Generate QR code as SVG string
-const qrCodeSVG = await QRCode.toString(keyUri, { type: "svg" });
+const qrCodeSVG = await QRCode.toString(uri, { type: "svg" });
 
 // Save QR code as PNG file
-await QRCode.toFile("qrcode.png", keyUri);
+await QRCode.toFile("qrcode.png", uri);
 ```
 
 #### Using the `qr-image` library
@@ -177,18 +177,18 @@ npm install @types/qr-image  # For TypeScript users
 import qr from "qr-image";
 import fs from "fs";
 
-const keyUri = totp.toKeyUri({
+const uri = totp.toKeyUri({
   secret,
   account: "<fullname, username or email>",
   issuer: "MyApp",
 });
 
 // Generate QR code as PNG buffer
-const qrPng = qr.image(keyUri, { type: "png" });
+const qrPng = qr.image(uri, { type: "png" });
 qrPng.pipe(fs.createWriteStream("qrcode.png"));
 
 // Generate QR code as SVG string
-const qrSvg = qr.imageSync(keyUri, { type: "svg" });
+const qrSvg = qr.imageSync(uri, { type: "svg" });
 ```
 
 #### Web Usage Example
@@ -197,7 +197,7 @@ For web applications, you can display the QR code directly in the browser:
 
 ```typescript
 // Generate QR code and display in HTML
-const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+const qrCodeDataURL = await QRCode.toDataURL(uri);
 const imgElement = document.createElement("img");
 imgElement.src = qrCodeDataURL;
 imgElement.alt = "QR Code for 2FA Setup";
@@ -218,14 +218,14 @@ async function setup2FA(userEmail: string) {
   const totp = new TOTP();
 
   // Create the key URI
-  const keyUri = totp.toKeyUri({
+  const uri = totp.toKeyUri({
     secret,
     account: userEmail,
     issuer: "MyApp",
   });
 
   // Generate QR code
-  const qrCodeDataURL = await QRCode.toDataURL(keyUri);
+  const qrCodeDataURL = await QRCode.toDataURL(uri);
 
   // Store the secret securely in your database
   const secretKey = secret.toString(); // base32 encoded
@@ -282,7 +282,7 @@ const buffer = Buffer.from(
   Array.from({ length: 42 }, () => Math.round(Math.random())),
 );
 
-const secret = new Secret({ buffer });
+const secret = new Secret({ data: buffer });
 ```
 
 Alternatively, use the `from` static method to retrieve a `Secret` instance from a buffer:
@@ -291,7 +291,7 @@ Alternatively, use the `from` static method to retrieve a `Secret` instance from
 const secret = Secret.from(buffer);
 ```
 
-You can also use `from` static method to get a `Secret` instance from a string in [ various encodings](#supported-encodings).
+You can also use `from` static method to get a `Secret` instance from a string in [various encodings](#supported-encodings).
 
 ```typescript
 const secret = Secret.from("LBHVIUBAFBKE6VCQF5EE6VCQFE======", "base32");
@@ -310,14 +310,14 @@ The default encoding for `toString()` is `base32` because most authentication ap
 >
 > ```typescript
 > const base32SecretKey = secret.toString();
-> const clonedSecret = secret.from(base32SecretKey, "base32");
+> const clonedSecret = Secret.from(base32SecretKey, "base32");
 > ```
 >
 > Or vice versa:
 >
 > ```typescript
 > const utf8SecretKey = secret.toString("utf-8");
-> const clonedSecret = secret.from(utf8SecretKey);
+> const clonedSecret = Secret.from(utf8SecretKey);
 > ```
 >
 > We recommend the former!
@@ -346,7 +346,7 @@ const totp = TOTP.create({ account: "user@example.com" });
 // or: new TOTP({ generateSecret: true, account: "user@example.com" });
 
 const token = totp.generate();
-const keyUri = totp.toKeyUri({ account: "user@example.com" });
+const uri = totp.toKeyUri({ account: "user@example.com" });
 ```
 
 Persist `totp.secret` before discarding the instance.
