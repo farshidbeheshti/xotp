@@ -21,13 +21,43 @@ You can try XOTP with the demo available at [xotp.dev][demo]!
 npm i xotp
 ```
 
+## Quick start
+
+Pick the pattern that matches your use case:
+
+### Server-side validation
+
+Use a shared `TOTP` instance without a bound secret. Pass each user's secret on every call (API login, multi-tenant apps):
+
+```typescript
+import { TOTP } from "xotp";
+
+const totp = new TOTP();
+totp.validate({ secret: userSecret, token });
+```
+
+See [Usage](#usage) below for secret handling, generation, and token delta.
+
+### Enrollment
+
+Generate a secret and key URI for one user (2FA setup, QR onboarding):
+
+```typescript
+import { TOTP } from "xotp";
+
+const totp = TOTP.create({ account: "user@example.com", issuer: "MyApp" });
+const uri = totp.toKeyUri(); // otpauth://... — encode as QR for the user
+```
+
+Persist `totp.secret` before discarding the instance. See [Key URI & QR Code Generation](#key-uri--qr-code-generation) and [Enrollment (bound instance)](#enrollment-bound-instance).
+
 ## Usage
 
 ```typescript
 import { Secret, TOTP } from "xotp";
 ```
 
-To quickly get started, you can generate or verify OTP tokens in two straightforward steps:
+The following walks through the **server-side validation** flow in more detail:
 
 ### Get a Secret
 
