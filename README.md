@@ -5,6 +5,7 @@
 
 [![npm version](https://img.shields.io/npm/v/xotp)](https://www.npmjs.com/package/xotp)
 [![CI](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml/badge.svg)](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/farshidbeheshti/xotp/graph/badge.svg)](https://codecov.io/gh/farshidbeheshti/xotp)
 [![License: MIT](https://img.shields.io/github/license/farshidbeheshti/xotp)](https://github.com/farshidbeheshti/xotp/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white)](https://github.com/farshidbeheshti/xotp)
 [![demo](https://img.shields.io/badge/demo-xotp.dev-026dfd)](https://xotp.dev)

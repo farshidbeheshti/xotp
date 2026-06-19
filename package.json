@@ -24,7 +24,7 @@
     "build": "tsc && node scripts/build-esm-entry.mjs",
     "prepare": "npm run build",
     "clean": "rimraf ./dist",
-    "test:coverage": "rimraf ./coverage & jest --coverage",
+    "test:coverage": "rimraf ./coverage && jest --coverage",
     "test": "jest",
     "test:smoke": "node tests/smoke/cjs.cjs && node tests/smoke/esm.mjs",
     "test:smoke:consumer:cjs": "node scripts/test-smoke-consumer.mjs cjs",
