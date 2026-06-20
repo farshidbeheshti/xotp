@@ -78,6 +78,14 @@ describe("URI.parse", () => {
       ),
     ).toThrow(/must be equal/);
   });
+
+  test("throws on invalid period", () => {
+    expect(() =>
+      URI.parse(
+        "otpauth://totp/user?secret=JBSWY3DPEHPK3PXP&period=0",
+      ),
+    ).toThrow(/Invalid period/);
+  });
 });
 
 describe("URI.format", () => {

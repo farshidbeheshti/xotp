@@ -9,4 +9,7 @@ module.exports = {
   },
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
   modulePaths: ["<rootDir>"],
+  collectCoverageFrom: ["src/**/*.ts"],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov"],
 };

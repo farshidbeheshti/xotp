@@ -44,3 +44,30 @@ describe("instance secret", () => {
     expect(hotp.generate({ counter })).toBe(expected);
   });
 });
+
+describe("validate", () => {
+  test("returns true for a matching token and false otherwise", () => {
+    const secretKey = Secret.from(secret, "ascii");
+    const hotp = new HOTP({ secret: secretKey, counter: 0 });
+    const token = hotp.generate({ counter: 0 });
+    expect(hotp.validate({ token, counter: 0 })).toBe(true);
+    expect(hotp.validate({ token: "000000", counter: 0 })).toBe(false);
+  });
+});
+
+describe("compare", () => {
+  test("returns a negative delta when the token matches a past counter", () => {
+    const secretKey = Secret.from(secret, "ascii");
+    const hotp = new HOTP({ window: 2 });
+    const token = hotp.generate({ secret: secretKey, counter: 5 });
+    expect(hotp.compare({ token, secret: secretKey, counter: 7 })).toBe(-2);
+  });
+});
+
+describe("toKeyUri", () => {
+  test("deprecated keyUri delegates to toKeyUri", () => {
+    const secretKey = Secret.from(secret, "ascii");
+    const hotp = new HOTP({ secret: secretKey, account: "user@example.com" });
+    expect(hotp.keyUri()).toBe(hotp.toKeyUri());
+  });
+});

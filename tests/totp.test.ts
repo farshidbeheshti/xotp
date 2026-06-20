@@ -98,3 +98,22 @@ describe("instance secret", () => {
     expect(totp.validate({ token, timestamp: timestamp * 1000 })).toBe(true);
   });
 });
+
+describe("timeUsed and timeRemaining", () => {
+  test("reports elapsed and remaining seconds in the current step", () => {
+    const totp = new TOTP({ duration: 30 });
+    expect(totp.timeUsed({ timestamp: 59_000 })).toBe(29);
+    expect(totp.timeRemaining({ timestamp: 59_000 })).toBe(1);
+  });
+});
+
+describe("equals", () => {
+  test("matches generate output for the same timestamp", () => {
+    const secretKey = Secret.from(secret.sha1, "ascii");
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    const timestamp = data[0].timestamp * 1000;
+    const token = totp.generate({ timestamp });
+    expect(totp.equals({ token, timestamp })).toBe(true);
+    expect(totp.equals({ token: "00000000", timestamp })).toBe(false);
+  });
+});
