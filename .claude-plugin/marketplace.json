@@ -1,0 +1,22 @@
+{
+  "name": "xotp-plugins",
+  "description": "Plugins for integrating xotp (TOTP/HOTP 2FA) with Claude Code",
+  "owner": {
+    "name": "Farshid Beheshti"
+  },
+  "plugins": [
+    {
+      "name": "xotp",
+      "source": "./plugins/xotp",
+      "description": "Integrate xotp (TOTP/HOTP 2FA) into Node.js and NestJS applications",
+      "version": "1.0.0",
+      "author": {
+        "name": "Farshid Beheshti"
+      },
+      "homepage": "https://xotp.dev",
+      "repository": "https://github.com/farshidbeheshti/xotp",
+      "license": "MIT",
+      "keywords": ["xotp", "totp", "hotp", "2fa", "mfa", "google-authenticator"]
+    }
+  ]
+}

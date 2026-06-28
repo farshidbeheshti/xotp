@@ -54,6 +54,9 @@ import { TOTP } from "xotp";
 // or: const { TOTP } = require("xotp");
 ```
 
+> [!NOTE]
+> **AI assistants:** Cursor — copy [`.cursor/skills/integrate-xotp`](.cursor/skills/integrate-xotp) into `.cursor/skills/` or invoke `/integrate-xotp`. Claude Code — `/plugin marketplace add farshidbeheshti/xotp` then `/plugin install xotp@xotp-plugins`, or run `/xotp:integrate`.
+
 ## Try it
 
 ```javascript
@@ -102,9 +105,6 @@ console.log(totp.secret!.toString()); // base32 — persist before discarding th
 ```
 
 See [Enrollment (bound instance)](#enrollment-bound-instance) and [Key URI & QR Code Generation](#key-uri--qr-code-generation).
-
-> [!NOTE]
-> **Cursor users:** Copy [`.cursor/skills/integrate-xotp`](.cursor/skills/integrate-xotp) into your project's `.cursor/skills/`, or invoke `/integrate-xotp` when adding 2FA with an AI assistant.
 
 ## Enrollment (bound instance)
 
