@@ -103,6 +103,9 @@ console.log(totp.secret!.toString()); // base32 — persist before discarding th
 
 See [Enrollment (bound instance)](#enrollment-bound-instance) and [Key URI & QR Code Generation](#key-uri--qr-code-generation).
 
+> [!NOTE]
+> **Cursor users:** Copy [`.cursor/skills/integrate-xotp`](.cursor/skills/integrate-xotp) into your project's `.cursor/skills/`, or invoke `/integrate-xotp` when adding 2FA with an AI assistant.
+
 ## Enrollment (bound instance)
 
 `TOTP.create({ account, issuer })` binds a generated secret to the instance — use it for enrollment flows. Equivalent:
