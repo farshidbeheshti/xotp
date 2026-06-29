@@ -4,7 +4,7 @@ description: >-
   Integrate xotp (TOTP/HOTP 2FA) into an application. Use when the user adds
   two-factor authentication, TOTP, HOTP, Google Authenticator, otpauth URIs,
   or asks to use the xotp npm package. Covers enrollment, verification,
-  NestJS (nestjs-xotp), QR setup, and security checklist.
+  QR setup, and security checklist. For NestJS, use integrate-nestjs-xotp.
 ---
 
 # Integrate xotp
@@ -26,10 +26,10 @@ Guide developers adding 2FA with [xotp](https://github.com/farshidbeheshti/xotp)
 | Stack | Approach |
 |-------|----------|
 | Node / Express / Hono / Fastify | `import { Secret, TOTP, HOTP } from "xotp"` |
-| NestJS | `nestjs-xotp` — `XOTPModule.forRoot()`, inject `XOTPTOTPService` / `XOTPHOTPService` |
+| NestJS | Use **integrate-nestjs-xotp** skill in the nestjs-xotp repo |
 | QR codes | Peer dep `qrcode` — xotp is zero-dependency; `toKeyUri()` returns the URI string only |
 
-Install: `npm i xotp` (Nest: `npm i xotp nestjs-xotp`).
+Install: `npm i xotp` (Nest: `npm i xotp nestjs-xotp` — see nestjs-xotp skill).
 
 ## Step 3 — Code patterns
 
@@ -96,31 +96,7 @@ const ok = hotp.validate({ secret, token, counter });
 
 ### NestJS
 
-```typescript
-import { Module } from "@nestjs/common";
-import { XOTPModule, XOTPTOTPService } from "nestjs-xotp";
-import { Secret } from "xotp";
-
-@Module({
-  imports: [XOTPModule.forRoot({ window: 1, issuer: "MyApp" })],
-})
-export class AppModule {}
-
-// In a service:
-verify(secretBase32: string, token: string) {
-  return this.totp.validate({
-    secret: Secret.from(secretBase32, "base32"),
-    token,
-  });
-}
-
-// Enrollment:
-const enrollment = XOTPTOTPService.create({ account, issuer });
-const secret = enrollment.secret!.toString();
-const keyUri = enrollment.toKeyUri();
-```
-
-See [nestjs-xotp examples](https://github.com/farshidbeheshti/nestjs-xotp/tree/main/examples).
+Use the **integrate-nestjs-xotp** skill ([nestjs-xotp](https://github.com/farshidbeheshti/nestjs-xotp/tree/main/skills/integrate)) for `XOTPModule`, DI, `forRootAsync`, and example module layout.
 
 ## Step 4 — Typical HTTP flow
 

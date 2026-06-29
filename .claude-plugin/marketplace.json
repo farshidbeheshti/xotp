@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "xotp",
-      "source": "./plugins/xotp",
+      "source": "./",
       "description": "Integrate xotp (TOTP/HOTP 2FA) into Node.js and NestJS applications",
       "version": "1.0.0",
       "author": {
