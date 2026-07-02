@@ -54,6 +54,9 @@ import { TOTP } from "xotp";
 // or: const { TOTP } = require("xotp");
 ```
 
+> [!NOTE]
+> **AI assistants:** Cursor — copy [`.cursor/skills/integrate-xotp`](.cursor/skills/integrate-xotp) into `.cursor/skills/` or invoke `/integrate-xotp`. Claude Code — `/plugin marketplace add farshidbeheshti/xotp` then `/plugin install xotp@xotp-plugins`, or run `/xotp:integrate`.
+
 ## Try it
 
 ```javascript
