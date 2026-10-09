@@ -1,43 +1,72 @@
 <p align="center" style="margin-bottom:0">
-  <img src="https://github.com/user-attachments/assets/8ef372d6-3cd7-4202-88b2-519f45f67160" width="200"  />
+  <img src="https://github.com/user-attachments/assets/8ef372d6-3cd7-4202-88b2-519f45f67160" width="180" alt="XOTP Logo" />
 </p>
+
 <h1 align="center">XOTP</h1>
 
-[![npm version](https://img.shields.io/npm/v/xotp)](https://www.npmjs.com/package/xotp)
-[![CI](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml/badge.svg)](https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/farshidbeheshti/xotp/graph/badge.svg)](https://codecov.io/gh/farshidbeheshti/xotp)
-[![License: MIT](https://img.shields.io/github/license/farshidbeheshti/xotp)](https://github.com/farshidbeheshti/xotp/blob/master/LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white)](https://github.com/farshidbeheshti/xotp)
-[![demo](https://img.shields.io/badge/demo-xotp.dev-026dfd)](https://xotp.dev)
+<p align="center">
+  <strong>Universal, Zero-Dependency One-Time Password (HOTP/TOTP) Library</strong>
+</p>
 
-[![npm downloads](https://img.shields.io/npm/dm/xotp)](https://www.npmjs.com/package/xotp)
-[![runtimes](https://img.shields.io/badge/runtimes-Node%20%7C%20Bun%20%7C%20Deno-blue)](#installation)
+<p align="center">
+  <a href="https://www.npmjs.com/package/xotp"><img src="https://img.shields.io/npm/v/xotp" alt="npm version" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://codecov.io/gh/farshidbeheshti/xotp"><img src="https://codecov.io/gh/farshidbeheshti/xotp/graph/badge.svg" alt="codecov" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/blob/master/LICENSE"><img src="https://img.shields.io/github/license/farshidbeheshti/xotp" alt="License: MIT" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp"><img src="https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://xotp.dev"><img src="https://img.shields.io/badge/demo-xotp.dev-026dfd" alt="demo" /></a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/xotp"><img src="https://img.shields.io/npm/dm/xotp" alt="npm downloads" /></a>
+  <a href="#installation"><img src="https://img.shields.io/badge/runtimes-Node%20%7C%20Bun%20%7C%20Deno%20%7C%20Browser%20%7C%20Edge-blue" alt="runtimes" /></a>
+</p>
+
+<p align="center">
+  <a href="https://xotp.dev"><img src="https://img.shields.io/badge/Try_demo-→_xotp.dev-026dfd?style=for-the-badge" alt="Try demo at xotp.dev" /></a>
+  &nbsp;
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Quick_start-→-3178C6?style=for-the-badge" alt="Quick start" /></a>
+</p>
+
+> [!IMPORTANT]
+> **v2 is async.** Token methods (`generate`, `validate`, `compare`, `equals`) now return Promises because they use the standard Web Crypto API under the hood. `await` them. See [Migrating from v1](#migrating-from-v1).
 
 ## Description
 
-`XOTP`(/zɔːtipi/) is a robust One-Time Password (HOTP/TOTP) library for Node.js, Bun, and Deno environments with zero dependencies. It's perfect for implementing two-factor authentication (2FA) / multifactor authentication (MFA) systems and is fully compatible with Google Authenticator and other well-known authentication apps and devices.
+`XOTP` (/zɔːtipi/) is a zero-dependency HOTP/TOTP library that runs anywhere the [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) is available — Node.js 20+, Bun, Deno, browsers, and edge runtimes. Use it for 2FA/MFA with Google Authenticator and other standard authenticator apps.
 
-XOTP implements both [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP) and has been fully tested against the test vectors provided in their respective RFC specifications: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset].
+<details open>
+<summary><strong>Table of contents</strong></summary>
 
+<br>
 
-> [!TIP]
-> You can try XOTP with the demo available at [xotp.dev][demo]!
->
-
-## Table of contents
+**Getting started**
 
 - [Installation](#installation)
 - [Try it](#try-it)
 - [Quick start](#quick-start)
-- [Enrollment (bound instance)](#enrollment-bound-instance)
+
+**Guides**
+
+- [Enrollment](#enrollment-bound-instance)
 - [Usage](#usage)
-- [Key URI & QR Code Generation](#key-uri--qr-code-generation)
-- [References](#references)
-  - [Secret](#secret)
-  - [TOTP Options](#totp-options)
-  - [HOTP](#hotp)
-  - [Supported Encodings](#supported-encodings)
-  - [Supported Algorithms](#supported-algorithms)
+- [Key URI & QR codes](#key-uri--qr-code-generation)
+
+**API reference**
+
+- [Secret](#secret)
+- [TOTP options](#totp-options)
+- [HOTP](#hotp)
+- [Encodings](#supported-encodings)
+- [Algorithms](#supported-algorithms)
+
+**Other**
+
+- [Migrating from v1](#migrating-from-v1)
+- [Contributing](#contributing--feature-requests)
+- [License](#license)
+
+</details>
 
 ## Installation
 
@@ -54,6 +83,10 @@ import { TOTP } from "xotp";
 // or: const { TOTP } = require("xotp");
 ```
 
+XOTP ships a tree-shakeable ES module, has no dependencies, and uses only Web Standard APIs (`crypto.subtle`, `Uint8Array`, `TextEncoder`) — so it adds no Node polyfills to your browser or edge bundle. No build configuration is required.
+
+XOTP implements [RFC 4226][rfc-4226] (HOTP) and [RFC 6238][rfc-6238] (TOTP) and is tested against their official vectors: [RFC 4226 Dataset][rfc-4226-dataset] and [RFC 6238 Dataset][rfc-6238-dataset].
+
 ## Try it
 
 ```javascript
@@ -62,8 +95,8 @@ import { Secret, TOTP } from "xotp";
 const secret = Secret.from("JBSWY3DPEHPK3PXP", "base32");
 const totp = new TOTP();
 
-const token = totp.generate({ secret });
-const ok = totp.validate({ secret, token });
+const token = await totp.generate({ secret });
+const ok = await totp.validate({ secret, token });
 
 console.log({ token, ok }); // { token: '...', ok: true }
 ```
@@ -82,8 +115,8 @@ import { Secret, TOTP } from "xotp";
 const secret = Secret.from("JBSWY3DPEHPK3PXP", "base32");
 const totp = new TOTP();
 
-const token = totp.generate({ secret });
-totp.validate({ secret, token }); // true
+const token = await totp.generate({ secret });
+await totp.validate({ secret, token }); // true
 ```
 
 See [Usage](#usage) for secret storage, options, and token delta.
@@ -114,7 +147,7 @@ new TOTP({ generateSecret: true, account: "user@example.com", issuer: "MyApp" })
 After `generate()` or `toKeyUri()`, persist `totp.secret` (e.g. `totp.secret!.toString()` for base32 storage).
 
 > [!TIP]
-> For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
+> For **server-side validation** of many users, use a shared engine without a bound secret and pass each user's secret per call: `await totp.validate({ secret: userSecret, token })`. Do not reuse one bound instance across users.
 
 ## Usage
 
@@ -140,7 +173,7 @@ Otherwise, use the `Secret` constructor to generate a cryptographically strong 2
 const secret = new Secret();
 ```
 
-If you need to generate a secret from a native `Buffer` type, or store it in a particular encoding, see the [Secret reference section](#secret-reference).
+If you need to generate a secret from raw bytes (`Uint8Array`), or store it in a particular encoding, see the [Secret reference section](#secret-reference).
 
 ### Generate an OTP Token
 
@@ -148,7 +181,7 @@ Next, generate a OTP token with the secret you've created:
 
 ```typescript
 const totp = new TOTP(/* options, if any! */);
-const token = totp.generate({ secret });
+const token = await totp.generate({ secret });
 ```
 
 You can customize token generation by passing optional arguments to the `new TOTP()` constructor. All available options and their default values are detailed in the [TOTP Options](#totp-options) section. While the `new TOTP()` constructor accepts options, you can override these by passing specific values to the `generate({secret, ...options})` method for individual token requests.
@@ -158,7 +191,7 @@ You can customize token generation by passing optional arguments to the `new TOT
 When a user submits a token—either one you generated with XOTP or one from an authentication app like Google Authenticator—you'll need to verify it:
 
 ```typescript
-const isValidToken = totp.validate({ secret, token: "<USER_SUBMITTED_TOKEN>" });
+const isValidToken = await totp.validate({ secret, token: "<USER_SUBMITTED_TOKEN>" });
 ```
 
 Similar to all `TOTP` and `HOTP` methods, you can pass new option values to the `validate({secret, token, ...options})` method to override those set during the TOTP instance initialization.
@@ -168,7 +201,7 @@ Similar to all `TOTP` and `HOTP` methods, you can pass new option values to the 
 To determine the difference between the current time step and the time step when a given token was generated, use the `compare` method:
 
 ```typescript
-const delta = totp.compare({ secret, token: "<USER_SUBMITTED_TOKEN>" });
+const delta = await totp.compare({ secret, token: "<USER_SUBMITTED_TOKEN>" });
 ```
 
 This method returns `0` if the token is for the current time step, or `null` if the token is not found within the search window. Otherwise, it returns the difference in the window.
@@ -202,8 +235,8 @@ import { URI, TOTP, HOTP } from "xotp";
 const totp = TOTP.fromKeyUri(
   "otpauth://totp/Issuer:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Issuer",
 );
-const token = totp.generate();
-const isValid = totp.validate({ token: "<USER_SUBMITTED_TOKEN>" });
+const token = await totp.generate();
+const isValid = await totp.validate({ token: "<USER_SUBMITTED_TOKEN>" });
 
 // Low-level parse / format
 const scannedUri =
@@ -303,7 +336,7 @@ document.body.appendChild(img);
 
 ## References
 
-Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, option types). Full signatures ship in `dist/index.d.ts`.
+Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, option types). Full type declarations ship with the package.
 
 ### Secret
 
@@ -334,22 +367,20 @@ const secret = Secret.for("sha512");
 > [!NOTE]
 > XOTP uses `sha1` as the default algorithm for generating both `TOTP` and `HOTP` tokens.
 
-If you already have a secret key in binary, you can initialize a `Secret` instance using a native `Buffer` object or a JavaScript `ArrayBuffer`. For example:
+If you already have a secret key in binary, you can initialize a `Secret` instance from a `Uint8Array`. (A Node.js `Buffer` works too, since it is a `Uint8Array`.) For example:
 
 ```typescript
-// This defines a dummy buffer of random 42-byte binary.
-// You would replace it with your buffer.
-const buffer = Buffer.from(
-  Array.from({ length: 42 }, () => Math.round(Math.random())),
-);
+// This defines a dummy 42-byte random key.
+// You would replace it with your own bytes.
+const bytes = crypto.getRandomValues(new Uint8Array(42));
 
-const secret = new Secret({ data: buffer });
+const secret = new Secret({ data: bytes });
 ```
 
-Alternatively, use the `from` static method to retrieve a `Secret` instance from a buffer:
+Alternatively, use the `from` static method to retrieve a `Secret` instance from a `Uint8Array`:
 
 ```typescript
-const secret = Secret.from(buffer);
+const secret = Secret.from(bytes);
 ```
 
 You can also use `from` static method to get a `Secret` instance from a string in [various encodings](#supported-encodings).
@@ -408,8 +439,8 @@ import { HOTP, Secret } from "xotp";
 const hotp = new HOTP();
 const secret = Secret.from("<YOUR_SECRET_KEY>", "base32");
 
-const token = hotp.generate({ secret, counter: 0 });
-const isValid = hotp.validate({ secret, token, counter: 0 });
+const token = await hotp.generate({ secret, counter: 0 });
+const isValid = await hotp.validate({ secret, token, counter: 0 });
 ```
 
 Enrollment and key URIs work the same as TOTP: `HOTP.create()`, `HOTP.fromKeyUri()`, and `hotp.toKeyUri()`. HOTP key URIs require a `counter` query parameter.
@@ -452,22 +483,36 @@ If you require an encoding not listed here, please let us know by opening an [is
 
 ### Supported Algorithms:
 
-- `sha1`
-- `sha224`
-- `sha256`
-- `sha512`
-- `sha384`
-- `sha-512/224`
-- `sha-512/256`
-- `sha3-224`
-- `sha3-256`
-- `sha3-384`
-- `sha3-512`
+Token generation/validation uses the Web Crypto API, which supports HMAC with:
 
-If you need an algorithm that is not listed, please open an [issue][issues] for it!
+- `sha1` (default)
+- `sha256`
+- `sha384`
+- `sha512`
+
+These are the only algorithms used by real-world authenticator apps and the RFC test vectors. Passing any other algorithm to `generate`/`validate` throws a clear error.
 
 > [!TIP]
 > Google Authenticator ignores the algorithm type and defaults to `sha1`.
+
+If you need an algorithm that is not listed, please open an [issue][issues] for it!
+
+## Migrating from v1
+
+v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` module to the Web Crypto API. This brings a few breaking changes:
+
+- **Token methods are async.** `await` `generate`, `validate`, `compare`, and `equals` on both `TOTP` and `HOTP`. `Secret` construction, `toString`, `toKeyUri`, and `URI` parsing stay synchronous.
+
+  ```diff
+  - const token = totp.generate({ secret });
+  - const ok = totp.validate({ secret, token });
+  + const token = await totp.generate({ secret });
+  + const ok = await totp.validate({ secret, token });
+  ```
+
+- **Secrets use `Uint8Array` instead of `Buffer`.** `Secret.from(bytes)` and `new Secret({ data })` accept a `Uint8Array`; `secret.buffer` returns a `Uint8Array`. A Node `Buffer` still works anywhere a `Uint8Array` is expected.
+- **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).
+- **Runtime requirement:** Node.js **20+** (for global `crypto`), or any browser/edge runtime with the Web Crypto API. Bun and Deno are supported.
 
 ## Contributing & Feature Requests
 
