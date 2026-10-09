@@ -1,2 +1,3 @@
-export * from "./uint8";
-export * from "./base32";
+export * from "./uint8.js";
+export * from "./base32.js";
+export * from "./bytes.js";
