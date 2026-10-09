@@ -4,15 +4,24 @@
   "author": "Farshid Beheshti",
   "version": "1.1.0",
   "type": "commonjs",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/cjs/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     }
+  },
+  "engines": {
+    "node": ">=20"
   },
   "files": [
     "dist/",
@@ -20,8 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "prebuild": "npm run clean",
-    "build": "tsc && node scripts/build-esm-entry.mjs",
+    "build": "npm run clean && tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node scripts/finalize-build.mjs",
     "prepare": "npm run build",
     "clean": "rimraf ./dist",
     "test:coverage": "rimraf ./coverage && jest --coverage",
