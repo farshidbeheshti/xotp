@@ -1,14 +1,14 @@
-import { Secret } from "./secret";
-import { hotpDefaults } from "./shared/hotpDefaults";
+import { Secret } from "./secret.js";
+import { hotpDefaults } from "./shared/hotpDefaults.js";
 import {
   formatKeyUriAlgorithm,
   parseKeyUriAlgorithm,
-} from "./shared/parseKeyUriAlgorithm";
-import { parseKeyUriDigits } from "./shared/parseKeyUriDigits";
-import { parseIntParam } from "./shared/parseIntParam";
-import { parseKeyUriLabel } from "./shared/parseKeyUriLabel";
-import { totpDefaults } from "./shared/totpDefaults";
-import { KeyUri, TOTPKeyUri, HOTPKeyUri } from "@src/types";
+} from "./shared/parseKeyUriAlgorithm.js";
+import { parseKeyUriDigits } from "./shared/parseKeyUriDigits.js";
+import { parseIntParam } from "./shared/parseIntParam.js";
+import { parseKeyUriLabel } from "./shared/parseKeyUriLabel.js";
+import { totpDefaults } from "./shared/totpDefaults.js";
+import { KeyUri, TOTPKeyUri, HOTPKeyUri } from "./types/index.js";
 
 function withOptionalIssuer<T extends { issuer?: string }>(
   keyUri: T,

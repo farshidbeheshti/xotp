@@ -1,6 +1,6 @@
-import type { Secret } from "../secret";
-import type { HOTPOptions } from "./hotp.options";
-import type { TOTPOptions } from "./totp.options";
+import type { Secret } from "../secret.js";
+import type { HOTPOptions } from "./hotp.options.js";
+import type { TOTPOptions } from "./totp.options.js";
 
 export type TOTPKeyUri = {
   type: "totp";

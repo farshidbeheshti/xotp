@@ -1,5 +1,5 @@
-import { parseIntParam } from "./parseIntParam";
-import { totpDefaults } from "./totpDefaults";
+import { parseIntParam } from "./parseIntParam.js";
+import { totpDefaults } from "./totpDefaults.js";
 
 export function parseKeyUriDigits(
   value: string | null,
