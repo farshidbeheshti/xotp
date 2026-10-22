@@ -529,13 +529,13 @@ Let's build the best OTP library together!
 <!-- External Links -->
 
 [rfc-3548]: http://tools.ietf.org/html/rfc3548
-[rfc-4226-dataset]: https://github.com/farshidbeheshti/xotp/blob/master/tests/data/rfc4226.ts
+[rfc-4226-dataset]: https://github.com/farshidbeheshti/xotp/blob/main/tests/data/rfc4226.ts
 [rfc-4226-wiki]: http://en.wikipedia.org/wiki/HMAC-based_One-time_Password_Algorithm
 [rfc-4226]: http://tools.ietf.org/html/rfc4226
 [rfc-4648]: https://tools.ietf.org/html/rfc4648
-[rfc-6238-dataset]: https://github.com/farshidbeheshti/xotp/blob/master/tests/data/rfc6238.ts
+[rfc-6238-dataset]: https://github.com/farshidbeheshti/xotp/blob/main/tests/data/rfc6238.ts
 [rfc-6238-wiki]: http://en.wikipedia.org/wiki/Time-based_One-time_Password_Algorithm
 [rfc-6238]: http://tools.ietf.org/html/rfc6238
-[project-license]: https://github.com/farshidbeheshti/xotp/blob/master/LICENSE
+[project-license]: https://github.com/farshidbeheshti/xotp/blob/main/LICENSE
 [issues]: https://github.com/farshidbeheshti/xotp/issues
 [demo]: https://xotp.dev
