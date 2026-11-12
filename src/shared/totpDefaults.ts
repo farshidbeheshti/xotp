@@ -1,4 +1,4 @@
-import type { TOTPOptions } from "@src/types";
+import type { TOTPOptions } from "../types/index.js";
 
 export const totpDefaults = Object.freeze<TOTPOptions>({
   algorithm: "sha1",

@@ -1,4 +1,4 @@
-import { Secret } from "../secret";
+import { Secret } from "../secret.js";
 
 export function resolveSecret(
   instanceSecret?: Secret,

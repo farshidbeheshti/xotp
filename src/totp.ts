@@ -1,9 +1,9 @@
-import { TOTPOptions, Algorithm } from "@src/types";
-import { HOTP } from "./hotp";
-import { Secret } from "./secret";
-import { resolveSecret } from "./shared/resolveSecret";
-import { totpDefaults } from "./shared/totpDefaults";
-import { URI } from "./uri";
+import { TOTPOptions, Algorithm } from "./types/index.js";
+import { HOTP } from "./hotp.js";
+import { Secret } from "./secret.js";
+import { resolveSecret } from "./shared/resolveSecret.js";
+import { totpDefaults } from "./shared/totpDefaults.js";
+import { URI } from "./uri.js";
 
 class TOTP {
   algorithm = this.defaults.algorithm;
@@ -65,7 +65,7 @@ class TOTP {
     return totpDefaults;
   }
 
-  generate({
+  async generate({
     secret,
     timestamp = Date.now(),
     algorithm = this.algorithm,
@@ -77,7 +77,7 @@ class TOTP {
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-  } = {}) {
+  } = {}): Promise<string> {
     const resolved = resolveSecret(this.#secret, secret);
     return this.#hotp.generate({
       secret: resolved,
@@ -87,7 +87,7 @@ class TOTP {
     });
   }
 
-  validate({
+  async validate({
     token,
     secret,
     timestamp = Date.now(),
@@ -103,9 +103,9 @@ class TOTP {
     digits?: number;
     duration?: number;
     window?: number;
-  }): boolean {
+  }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
-    return this.#hotp.validate({
+    return await this.#hotp.validate({
       token,
       secret: resolved,
       counter: this.#calcHotpCounter({ timestamp, duration }),
@@ -115,7 +115,7 @@ class TOTP {
     });
   }
 
-  compare({
+  async compare({
     token,
     secret,
     timestamp = Date.now(),
@@ -131,9 +131,9 @@ class TOTP {
     digits?: number;
     duration?: number;
     window?: number;
-  }): number | null {
+  }): Promise<number | null> {
     const resolved = resolveSecret(this.#secret, secret);
-    return this.#hotp.compare({
+    return await this.#hotp.compare({
       token,
       secret: resolved,
       window,
@@ -143,7 +143,7 @@ class TOTP {
     });
   }
 
-  equals({
+  async equals({
     token,
     secret,
     timestamp = Date.now(),
@@ -157,9 +157,9 @@ class TOTP {
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-  }): boolean {
+  }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
-    return this.#hotp.equals({
+    return await this.#hotp.equals({
       token,
       secret: resolved,
       algorithm,

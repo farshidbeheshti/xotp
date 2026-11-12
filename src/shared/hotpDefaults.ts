@@ -1,4 +1,4 @@
-import type { HOTPOptions } from "@src/types";
+import type { HOTPOptions } from "../types/index.js";
 
 export const hotpDefaults = Object.freeze<HOTPOptions>({
   algorithm: "sha1",

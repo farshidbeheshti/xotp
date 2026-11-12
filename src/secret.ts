@@ -1,11 +1,11 @@
-import { randomBytes } from "node:crypto";
-import { Algorithm, Encoding } from "./types";
-import { base32Decode, base32Encode } from "./encoding";
+import { randomBytes } from "./crypto/index.js";
+import { Algorithm, Encoding } from "./types/index.js";
+import { decodeBytes, encodeBytes } from "./encoding/index.js";
 
 export class Secret {
-  #buffer: Buffer;
+  #bytes: Uint8Array;
   constructor();
-  constructor({ data }: { data: Buffer });
+  constructor({ data }: { data: Uint8Array });
   constructor({ algorithm }: { algorithm: Algorithm });
   constructor({ size }: { size: number });
   constructor({
@@ -13,23 +13,25 @@ export class Secret {
     algorithm,
     size = 160 / 8,
   }: Partial<{
-    data: Buffer;
+    data: Uint8Array;
     algorithm: Algorithm;
     size: number;
   }> = {}) {
-    let buffer: Buffer;
+    let bytes: Uint8Array;
     if (data) {
-      buffer = data;
+      bytes = data;
     } else if (algorithm || size) {
-      buffer = randomBytes((algorithm && this.#getRecommendedSizeFor(algorithm)) || size);
+      bytes = randomBytes(
+        (algorithm && this.#getRecommendedSizeFor(algorithm)) || size,
+      );
     } else {
       throw new TypeError("Constructor arguments are not valid.");
     }
-    this.#buffer = buffer;
+    this.#bytes = bytes;
   }
 
-  get buffer() {
-    return this.#buffer;
+  get buffer(): Uint8Array {
+    return this.#bytes;
   }
 
   static for(algorithm: Algorithm) {
@@ -37,22 +39,17 @@ export class Secret {
   }
 
   static from(data: string, encoding?: Encoding): Secret;
-  static from(data: Buffer): Secret;
-  static from(data: Buffer | string, encoding: Encoding = "utf-8"): Secret {
+  static from(data: Uint8Array): Secret;
+  static from(data: Uint8Array | string, encoding: Encoding = "utf-8"): Secret {
     if (typeof data == "string") {
-      if (encoding == "base32") {
-        const bytes = base32Decode(data);
-        return new Secret({ data: Buffer.from(bytes) });
-      }
-      return new Secret({ data: Buffer.from(data, encoding) });
+      return new Secret({ data: encodeBytes(data, encoding) });
     }
 
     return new Secret({ data });
   }
 
   toString(encoding: Encoding = "base32") {
-    if (encoding == "base32") return base32Encode(this.#buffer);
-    return this.#buffer.toString(encoding);
+    return decodeBytes(this.#bytes, encoding);
   }
 
   #getRecommendedSizeFor(algorithm: Algorithm): number {

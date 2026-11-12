@@ -34,12 +34,12 @@ try {
   if (format === "cjs") {
     writeFileSync(
       join(tmpDir, "test.cjs"),
-      `const { runChecks } = require(${JSON.stringify(checksCjs)});\nrunChecks(require("xotp"));\nconsole.log("smoke (cjs, package): ok");\n`,
+      `const { runChecks } = require(${JSON.stringify(checksCjs)});\nrunChecks(require("xotp")).then(() => console.log("smoke (cjs, package): ok"));\n`,
     );
   } else {
     writeFileSync(
       join(tmpDir, "test.mjs"),
-      `import { runChecks } from ${JSON.stringify(checksMjs)};\nimport { TOTP, HOTP, Secret } from "xotp";\nrunChecks({ TOTP, HOTP, Secret });\nconsole.log("smoke (esm, package): ok");\n`,
+      `import { runChecks } from ${JSON.stringify(checksMjs)};\nimport { TOTP, HOTP, Secret } from "xotp";\nawait runChecks({ TOTP, HOTP, Secret });\nconsole.log("smoke (esm, package): ok");\n`,
     );
   }
 

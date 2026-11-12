@@ -11,15 +11,10 @@ export function uintEncode(num: number): Uint8Array {
   return bytes;
 }
 
-export function uintDecode(bytes: Uint8Array | Buffer): number {
+export function uintDecode(bytes: Uint8Array): number {
   let num = 0;
-  let arr = bytes;
-  if (bytes instanceof Buffer) {
-    arr = new Uint8Array(bytes);
-  }
-
-  for (let i = 0; i < arr.length; i++) {
-    num = num * 2 ** 8 + arr[i];
+  for (let i = 0; i < bytes.length; i++) {
+    num = num * 2 ** 8 + bytes[i];
   }
   return num;
 }
@@ -32,11 +27,11 @@ export function uint64Encode(num: number | bigint): Uint8Array {
   return bytes;
 }
 
-export function uint64Decode(bytes: Uint8Array | Buffer): bigint {
-  let arr = bytes;
-  if (bytes instanceof Buffer) {
-    arr = new Uint8Array(bytes);
-  }
-  const dataView = new DataView(arr.buffer);
+export function uint64Decode(bytes: Uint8Array): bigint {
+  const dataView = new DataView(
+    bytes.buffer,
+    bytes.byteOffset,
+    bytes.byteLength,
+  );
   return dataView.getBigUint64(0);
 }
