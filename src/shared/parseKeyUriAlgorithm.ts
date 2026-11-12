@@ -1,5 +1,5 @@
-import { Algorithm } from "@src/types";
-import { totpDefaults } from "./totpDefaults";
+import { Algorithm } from "../types/index.js";
+import { totpDefaults } from "./totpDefaults.js";
 
 const URI_ALGORITHMS: Record<string, Algorithm> = {
   "SHA1": "sha1",

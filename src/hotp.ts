@@ -1,11 +1,11 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { HOTPOptions, Algorithm } from "@src/types";
-import { uintEncode } from "./encoding";
-import { padStart } from "./utils";
-import { Secret } from "./secret";
-import { resolveSecret } from "./shared/resolveSecret";
-import { hotpDefaults } from "./shared/hotpDefaults";
-import { URI } from "./uri";
+import { hmac, timingSafeEqual } from "./crypto/index.js";
+import { HOTPOptions, Algorithm } from "./types/index.js";
+import { encodeBytes, uintEncode } from "./encoding/index.js";
+import { padStart } from "./utils.js";
+import { Secret } from "./secret.js";
+import { resolveSecret } from "./shared/resolveSecret.js";
+import { hotpDefaults } from "./shared/hotpDefaults.js";
+import { URI } from "./uri.js";
 
 class HOTP {
   algorithm = this.defaults.algorithm;
@@ -65,7 +65,7 @@ class HOTP {
     return hotpDefaults;
   }
 
-  generate({
+  async generate({
     secret,
     counter = ++this.counter,
     algorithm = this.algorithm,
@@ -75,11 +75,9 @@ class HOTP {
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
-  } = {}) {
+  } = {}): Promise<string> {
     const resolved = resolveSecret(this.#secret, secret);
-    const digest = createHmac(algorithm, resolved.buffer)
-      .update(uintEncode(counter))
-      .digest();
+    const digest = await hmac(algorithm, resolved.buffer, uintEncode(counter));
 
     const offset = digest[digest.byteLength - 1] & 0xf;
     const truncatedBinary =
@@ -91,7 +89,7 @@ class HOTP {
     return padStart(`${token}`, digits, "0");
   }
 
-  validate({
+  async validate({
     token,
     secret,
     counter = this.counter,
@@ -105,21 +103,21 @@ class HOTP {
     algorithm?: Algorithm;
     digits?: number;
     window?: number;
-  }): boolean {
+  }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
     return (
-      this.compare({
+      (await this.compare({
         token,
         secret: resolved,
         counter,
         digits,
         algorithm,
         window,
-      }) != null
+      })) != null
     );
   }
 
-  compare({
+  async compare({
     token,
     secret,
     counter = this.counter,
@@ -133,13 +131,15 @@ class HOTP {
     digits?: number;
     algorithm?: Algorithm;
     window?: number;
-  }): number | null {
+  }): Promise<number | null> {
     const resolved = resolveSecret(this.#secret, secret);
-    if (this.equals({ token, secret: resolved, counter, digits, algorithm }))
+    if (
+      await this.equals({ token, secret: resolved, counter, digits, algorithm })
+    )
       return 0;
     for (let i = 1; i <= window; i++) {
       if (
-        this.equals({
+        await this.equals({
           token,
           secret: resolved,
           counter: counter + i,
@@ -149,7 +149,7 @@ class HOTP {
       )
         return i;
       if (
-        this.equals({
+        await this.equals({
           token,
           secret: resolved,
           counter: counter - i,
@@ -162,7 +162,7 @@ class HOTP {
     return null;
   }
 
-  equals({
+  async equals({
     token,
     secret,
     counter = this.counter,
@@ -174,15 +174,15 @@ class HOTP {
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
-  }): boolean {
+  }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
-    const generatedToken = this.generate({
+    const generatedToken = await this.generate({
       secret: resolved,
       counter,
       algorithm,
       digits,
     });
-    return timingSafeEqual(Buffer.from(token), Buffer.from(generatedToken));
+    return timingSafeEqual(encodeBytes(token), encodeBytes(generatedToken));
   }
 
   toKeyUri({

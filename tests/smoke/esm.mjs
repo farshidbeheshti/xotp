@@ -1,5 +1,5 @@
 import { runChecks } from "./checks.mjs";
-import { TOTP, HOTP, Secret } from "../../dist/index.mjs";
+import { TOTP, HOTP, Secret } from "../../dist/esm/index.js";
 
-runChecks({ TOTP, HOTP, Secret });
+await runChecks({ TOTP, HOTP, Secret });
 console.log("smoke (esm, dist): ok");

@@ -5,9 +5,12 @@ module.exports = {
   testEnvironment: "node",
   verbose: true,
   transform: {
-    "^.+.tsx?$": ["ts-jest", {}],
+    "^.+.tsx?$": ["ts-jest", { isolatedModules: true }],
   },
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths),
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    ...pathsToModuleNameMapper(compilerOptions.paths),
+  },
   modulePaths: ["<rootDir>"],
   collectCoverageFrom: ["src/**/*.ts"],
   coverageDirectory: "coverage",

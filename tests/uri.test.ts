@@ -146,7 +146,7 @@ describe("toKeyUri", () => {
 
 describe("fromKeyUri", () => {
   describe("TOTP", () => {
-    test("round-trips toKeyUri output", () => {
+    test("round-trips toKeyUri output", async () => {
       const secret = Secret.from(totpSecret.sha1, "ascii");
       const totp = new TOTP({
         secret,
@@ -166,20 +166,20 @@ describe("fromKeyUri", () => {
       expect(imported.secret).toEqual(secret);
       expect(imported.account).toBe("user@example.com");
       expect(imported.issuer).toBe("TestIssuer");
-      expect(imported.generate({ timestamp })).toBe(
-        totp.generate({ timestamp }),
+      expect(await imported.generate({ timestamp })).toBe(
+        await totp.generate({ timestamp }),
       );
     });
 
-    test("generate and validate without passing secret", () => {
+    test("generate and validate without passing secret", async () => {
       const secret = Secret.from(totpSecret.sha1, "ascii");
       const totp = new TOTP({ secret, digits: 8, duration });
       const uri = totp.toKeyUri({ account: "user@example.com" });
       const imported = TOTP.fromKeyUri(uri);
       const timestamp = 59 * 1000;
-      const token = imported.generate({ timestamp });
+      const token = await imported.generate({ timestamp });
 
-      expect(imported.validate({ token, timestamp })).toBe(true);
+      expect(await imported.validate({ token, timestamp })).toBe(true);
     });
 
     test("throws when URI is HOTP", () => {
@@ -190,7 +190,7 @@ describe("fromKeyUri", () => {
   });
 
   describe("HOTP", () => {
-    test("round-trips toKeyUri output", () => {
+    test("round-trips toKeyUri output", async () => {
       const secret = Secret.from(hotpSecret, "ascii");
       const hotp = new HOTP({
         secret,
@@ -208,7 +208,9 @@ describe("fromKeyUri", () => {
       expect(imported.account).toBe("user@example.com");
       expect(imported.issuer).toBe("TestIssuer");
       expect(imported.counter).toBe(4);
-      expect(imported.generate({ counter: 4 })).toBe(hotp.generate({ counter: 4 }));
+      expect(await imported.generate({ counter: 4 })).toBe(
+        await hotp.generate({ counter: 4 }),
+      );
     });
 
     test("throws when URI is TOTP", () => {

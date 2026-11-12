@@ -1,5 +1,5 @@
-import { Algorithm } from "@src/types";
-import type { Secret } from "../secret";
+import { Algorithm } from "./algorithms.js";
+import type { Secret } from "../secret.js";
 
 export type HOTPOptions = {
   algorithm: Algorithm;

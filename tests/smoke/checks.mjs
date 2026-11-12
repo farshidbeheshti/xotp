@@ -3,10 +3,10 @@ const TOTP_TIMESTAMP = 59;
 const TOTP_TOKEN = "94287082";
 const HOTP_TOKEN = "755224";
 
-export function runChecks({ TOTP, HOTP, Secret }) {
+export async function runChecks({ TOTP, HOTP, Secret }) {
   const totpSecret = Secret.from(TOTP_SECRET, "ascii");
   const totp = new TOTP({ algorithm: "sha1", digits: 8 });
-  const token = totp.generate({
+  const token = await totp.generate({
     secret: totpSecret,
     timestamp: TOTP_TIMESTAMP * 1000,
   });
@@ -16,19 +16,19 @@ export function runChecks({ TOTP, HOTP, Secret }) {
   }
 
   if (
-    !totp.validate({
+    !(await totp.validate({
       secret: totpSecret,
       token: TOTP_TOKEN,
       timestamp: TOTP_TIMESTAMP * 1000,
       digits: 8,
-    })
+    }))
   ) {
     throw new Error("TOTP validate failed");
   }
 
   const hotpSecret = Secret.from(TOTP_SECRET, "ascii");
   const hotp = new HOTP({ algorithm: "sha1", digits: 6 });
-  const hotpToken = hotp.generate({ secret: hotpSecret, counter: 0 });
+  const hotpToken = await hotp.generate({ secret: hotpSecret, counter: 0 });
 
   if (hotpToken !== HOTP_TOKEN) {
     throw new Error(`HOTP generate: expected ${HOTP_TOKEN}, got ${hotpToken}`);
