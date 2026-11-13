@@ -215,6 +215,36 @@ To use different limits for past and future time steps, pass an object instead o
 const totp = new TOTP({ window: { backward: 2, forward: 0 } });
 ```
 
+### Replay Protection
+
+A TOTP token stays valid for its whole time step and for the surrounding window, so `validate()` accepts the same token every time it is submitted during that period. To accept each token only once ([RFC 6238 §5.2][rfc-6238]), use `verify()`. It reports the time step the token belongs to, and skips every time step at or before `afterTimeStep`:
+
+```typescript
+const result = await totp.verify({
+  secret,
+  token: "<USER_SUBMITTED_TOKEN>",
+  afterTimeStep: user.lastTimeStep, // undefined or null on the first login
+});
+// { valid: true, timeStep: 59712345, delta: 0 } | { valid: false }
+
+if (result.valid) {
+  // Remember the time step, so this token and any older one are refused next time.
+  await saveLastTimeStep(user.id, result.timeStep);
+}
+```
+
+XOTP keeps no state, so the protection only works if you store `timeStep` after each successful call and pass it back as `afterTimeStep` on the next one. Store one value per secret, and clear it when the secret is replaced.
+
+> [!IMPORTANT]
+> Save the time step with a conditional update and treat "no row updated" as a rejected token. Otherwise two simultaneous requests carrying the same token can both read the old value and both pass:
+>
+> ```sql
+> UPDATE users SET last_time_step = $1
+> WHERE id = $2 AND (last_time_step IS NULL OR last_time_step < $1);
+> ```
+
+`verify()` takes the same options as `validate()`. Without `afterTimeStep` it accepts the same tokens as `validate()`; `delta` is the same value `compare()` returns. An `afterTimeStep` that is not an integer throws a `TypeError`.
+
 ## Key URI & QR Code Generation
 
 ### Export (generate a key URI)
@@ -343,7 +373,7 @@ document.body.appendChild(img);
 
 ## References
 
-Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, `OTPWindow`, option types). Full type declarations ship with the package.
+Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, `TOTPVerifyResult`, `OTPWindow`, option types). Full type declarations ship with the package.
 
 ### Secret
 
