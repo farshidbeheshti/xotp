@@ -101,6 +101,145 @@ describe("instance secret", () => {
   });
 });
 
+describe("window", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  // Milliseconds at the start of the given time step.
+  const at = (timeStep: number) => timeStep * duration * 1000;
+  const tokenFor = (timeStep: number) =>
+    new TOTP({ digits: 8, duration }).generate({
+      secret: secretKey,
+      timestamp: at(timeStep),
+    });
+
+  test("default window accepts one time step in each direction", async () => {
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    const timestamp = at(100);
+    expect(await totp.compare({ token: await tokenFor(99), timestamp })).toBe(
+      -1,
+    );
+    expect(await totp.compare({ token: await tokenFor(101), timestamp })).toBe(
+      1,
+    );
+    expect(await totp.compare({ token: await tokenFor(98), timestamp })).toBe(
+      null,
+    );
+    expect(await totp.compare({ token: await tokenFor(102), timestamp })).toBe(
+      null,
+    );
+  });
+
+  test("a numeric window is symmetric", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: 2,
+    });
+    const timestamp = at(100);
+    expect(await totp.compare({ token: await tokenFor(98), timestamp })).toBe(
+      -2,
+    );
+    expect(await totp.compare({ token: await tokenFor(102), timestamp })).toBe(
+      2,
+    );
+    expect(await totp.validate({ token: await tokenFor(98), timestamp })).toBe(
+      true,
+    );
+  });
+
+  test("a null window accepts only the current time step", async () => {
+    const window = null as unknown as number;
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration, window });
+    const timestamp = at(100);
+    expect(await totp.validate({ token: await tokenFor(100), timestamp })).toBe(
+      true,
+    );
+    expect(await totp.validate({ token: await tokenFor(99), timestamp })).toBe(
+      false,
+    );
+    expect(await totp.validate({ token: await tokenFor(101), timestamp })).toBe(
+      false,
+    );
+  });
+
+  test("backward-only window rejects tokens from future time steps", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: { backward: 1, forward: 0 },
+    });
+    const timestamp = at(100);
+    expect(await totp.validate({ token: await tokenFor(99), timestamp })).toBe(
+      true,
+    );
+    expect(await totp.validate({ token: await tokenFor(101), timestamp })).toBe(
+      false,
+    );
+  });
+
+  test("forward-only window rejects tokens from past time steps", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: { backward: 0, forward: 1 },
+    });
+    const timestamp = at(100);
+    expect(await totp.validate({ token: await tokenFor(101), timestamp })).toBe(
+      true,
+    );
+    expect(await totp.validate({ token: await tokenFor(99), timestamp })).toBe(
+      false,
+    );
+  });
+
+  test("backward and forward limits are independent", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: { backward: 3, forward: 1 },
+    });
+    const timestamp = at(100);
+    expect(await totp.compare({ token: await tokenFor(97), timestamp })).toBe(
+      -3,
+    );
+    expect(await totp.compare({ token: await tokenFor(96), timestamp })).toBe(
+      null,
+    );
+    expect(await totp.compare({ token: await tokenFor(101), timestamp })).toBe(
+      1,
+    );
+    expect(await totp.compare({ token: await tokenFor(102), timestamp })).toBe(
+      null,
+    );
+  });
+
+  test("per-call window overrides the instance window", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: 0,
+    });
+    const timestamp = at(100);
+    expect(await totp.validate({ token: await tokenFor(99), timestamp })).toBe(
+      false,
+    );
+    expect(
+      await totp.compare({ token: await tokenFor(99), timestamp, window: 1 }),
+    ).toBe(-1);
+    expect(
+      await totp.validate({
+        token: await tokenFor(99),
+        timestamp,
+        window: { backward: 0, forward: 1 },
+      }),
+    ).toBe(false);
+  });
+});
+
 describe("timeUsed and timeRemaining", () => {
   test("reports elapsed and remaining seconds in the current step", () => {
     const totp = new TOTP({ duration: 30 });

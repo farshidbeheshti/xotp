@@ -58,11 +58,117 @@ describe("validate", () => {
 describe("compare", () => {
   test("returns a negative delta when the token matches a past counter", async () => {
     const secretKey = Secret.from(secret, "ascii");
-    const hotp = new HOTP({ window: 2 });
+    const hotp = new HOTP({ window: { backward: 2, forward: 0 } });
     const token = await hotp.generate({ secret: secretKey, counter: 5 });
     expect(await hotp.compare({ token, secret: secretKey, counter: 7 })).toBe(
       -2,
     );
+  });
+});
+
+describe("window", () => {
+  const secretKey = Secret.from(secret, "ascii");
+  const tokenFor = (counter: number) =>
+    new HOTP().generate({ secret: secretKey, counter });
+
+  test("default window looks one counter ahead and never backward", async () => {
+    const hotp = new HOTP({ secret: secretKey });
+    expect(await hotp.compare({ token: await tokenFor(5), counter: 5 })).toBe(
+      0,
+    );
+    expect(await hotp.compare({ token: await tokenFor(6), counter: 5 })).toBe(
+      1,
+    );
+    expect(await hotp.compare({ token: await tokenFor(7), counter: 5 })).toBe(
+      null,
+    );
+    expect(await hotp.compare({ token: await tokenFor(4), counter: 5 })).toBe(
+      null,
+    );
+  });
+
+  test("rejects a used token once the counter has advanced", async () => {
+    const hotp = new HOTP({ secret: secretKey });
+    const token = await tokenFor(5);
+    expect(await hotp.validate({ token, counter: 5 })).toBe(true);
+    expect(await hotp.validate({ token, counter: 6 })).toBe(false);
+  });
+
+  test("a numeric window is forward only", async () => {
+    const hotp = new HOTP({ secret: secretKey, window: 2 });
+    expect(await hotp.compare({ token: await tokenFor(7), counter: 5 })).toBe(
+      2,
+    );
+    expect(await hotp.compare({ token: await tokenFor(8), counter: 5 })).toBe(
+      null,
+    );
+    expect(await hotp.compare({ token: await tokenFor(4), counter: 5 })).toBe(
+      null,
+    );
+    expect(await hotp.validate({ token: await tokenFor(3), counter: 5 })).toBe(
+      false,
+    );
+  });
+
+  test("a window of 0 accepts only the exact counter", async () => {
+    const hotp = new HOTP({ secret: secretKey, window: 0 });
+    expect(await hotp.validate({ token: await tokenFor(5), counter: 5 })).toBe(
+      true,
+    );
+    expect(await hotp.validate({ token: await tokenFor(6), counter: 5 })).toBe(
+      false,
+    );
+  });
+
+  test("a null window accepts only the exact counter", async () => {
+    const window = null as unknown as number;
+    const hotp = new HOTP({ secret: secretKey, window });
+    expect(await hotp.validate({ token: await tokenFor(5), counter: 5 })).toBe(
+      true,
+    );
+    expect(await hotp.validate({ token: await tokenFor(6), counter: 5 })).toBe(
+      false,
+    );
+    expect(
+      await new HOTP({ secret: secretKey }).compare({
+        token: await tokenFor(6),
+        counter: 5,
+        window,
+      }),
+    ).toBe(null);
+  });
+
+  test("backward and forward limits are independent", async () => {
+    const hotp = new HOTP({
+      secret: secretKey,
+      window: { backward: 1, forward: 3 },
+    });
+    expect(await hotp.compare({ token: await tokenFor(4), counter: 5 })).toBe(
+      -1,
+    );
+    expect(await hotp.compare({ token: await tokenFor(3), counter: 5 })).toBe(
+      null,
+    );
+    expect(await hotp.compare({ token: await tokenFor(8), counter: 5 })).toBe(
+      3,
+    );
+    expect(await hotp.compare({ token: await tokenFor(9), counter: 5 })).toBe(
+      null,
+    );
+  });
+
+  test("per-call window overrides the instance window", async () => {
+    const hotp = new HOTP({ secret: secretKey, window: 0 });
+    expect(
+      await hotp.compare({ token: await tokenFor(7), counter: 5, window: 2 }),
+    ).toBe(2);
+    expect(
+      await hotp.validate({
+        token: await tokenFor(4),
+        counter: 5,
+        window: { backward: 1, forward: 0 },
+      }),
+    ).toBe(true);
   });
 });
 

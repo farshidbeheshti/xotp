@@ -208,6 +208,13 @@ This method returns `0` if the token is for the current time step, or `null` if 
 
 You can adjust the search window through the options passed to the method, or by modifying the default value in the options passed to the `TOTP` constructor. The default window value is `1`, meaning it checks one time step before and one time step after the current time step to see if the token was generated in any of those steps.
 
+To use different limits for past and future time steps, pass an object instead of a number:
+
+```typescript
+// Accept the previous two time steps, but none ahead of the server clock.
+const totp = new TOTP({ window: { backward: 2, forward: 0 } });
+```
+
 ## Key URI & QR Code Generation
 
 ### Export (generate a key URI)
@@ -336,7 +343,7 @@ document.body.appendChild(img);
 
 ## References
 
-Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, option types). Full type declarations ship with the package.
+Public API: `TOTP`, `HOTP`, `Secret`, `URI`, and types (`KeyUri`, `TOTPKeyUri`, `HOTPKeyUri`, `Algorithm`, `Encoding`, `OTPWindow`, option types). Full type declarations ship with the package.
 
 ### Secret
 
@@ -422,7 +429,7 @@ The default encoding for `toString()` is `base32` because most authentication ap
 | --------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | algorithm | `string` | "sha1"  | The algorithm used for calculating the HMAC, see [supported algorithms](#supported-algorithms)!                                                                                     |
 | digits    | `number` | 6       | The length of the OTP token.                                                                                                                                                        |
-| window    | `number` | 1       | The number of window(s) within which to validate the token. If the token isn't validated in the current time step, XOTP attempts to validate it in the previous and future windows. |
+| window    | `number` or `{ backward, forward }` | 1       | The number of window(s) within which to validate the token. If the token isn't validated in the current time step, XOTP attempts to validate it in the previous and future windows. A number applies to both directions; use `{ backward, forward }` to set each one separately. |
 | duration  | `number` | 30      | The duration (in seconds) for which a token is valid.                                                                                                                               |
 | issuer    | `string` | "xotp"  | The provider or service associated with the token (e.g., "Github"). This is just a display field to display the issuer's name in authenticator apps like Google Authenticator.      |
 | account         | `string`  |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
@@ -447,13 +454,30 @@ Enrollment and key URIs work the same as TOTP: `HOTP.create()`, `HOTP.fromKeyUri
 
 When a bound `HOTP` instance generates without an explicit `counter`, the instance counter increments automatically.
 
+#### HOTP window
+
+Unlike TOTP, the HOTP window only looks ahead: `window: 2` accepts the expected counter and the next two, and never an earlier one. This follows [RFC 4226][rfc-4226], and it means a token is rejected once you have advanced the stored counter past it.
+
+```typescript
+const hotp = new HOTP({ window: 2 }); // checks counter, counter + 1, counter + 2
+```
+
+To also accept earlier counters, set the backward limit explicitly:
+
+```typescript
+const hotp = new HOTP({ window: { backward: 1, forward: 2 } });
+```
+
+> [!WARNING]
+> A `backward` limit above `0` makes HOTP accept tokens for counters below the one you pass, including tokens that were already used. Leave it at `0` unless you track used counters yourself.
+
 #### HOTP Options
 
 | Option         | Type      | Default | Description                                                                                                                                                                         |
 | -------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | algorithm      | `string`  | "sha1"  | HMAC algorithm; see [supported algorithms](#supported-algorithms).                                                                                                                  |
 | digits         | `number`  | 6       | Token length (6 or 8).                                                                                                                                                              |
-| window         | `number`  | 1       | Counter values before/after the expected counter to accept during validation.                                                                                                       |
+| window         | `number` or `{ backward, forward }` | 1       | Counter values after the expected counter to accept during validation. A number only looks ahead; use `{ backward, forward }` to also accept earlier counters (see [HOTP window](#hotp-window)). |
 | counter        | `number`  | 0       | Current counter value. Required in HOTP key URIs.                                                                                                                                   |
 | issuer         | `string`  | "xotp"  | Display label for the service name in authenticator apps.                                                                                                                           |
 | account        | `string`  |         | Display label for the user (e.g. email).                                                                                                                                            |
@@ -511,6 +535,8 @@ v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` modul
   ```
 
 - **Secrets use `Uint8Array` instead of `Buffer`.** `Secret.from(bytes)` and `new Secret({ data })` accept a `Uint8Array`; `secret.buffer` returns a `Uint8Array`. A Node `Buffer` still works anywhere a `Uint8Array` is expected.
+- **The HOTP window only looks ahead.** A numeric `window` on `HOTP` no longer accepts counters below the one you pass, so a used token is rejected after the counter advances. To keep the v1 behaviour, pass `window: { backward: n, forward: n }`. The TOTP window is unchanged.
+- **`window` is typed `OTPWindow`, not `number`.** The `window` option and the `window` property on `TOTP` and `HOTP` instances are now `number | { backward, forward }`. Code that reads `totp.window` or `hotp.window` into a `number` needs to handle the object form.
 - **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).
 - **Runtime requirement:** Node.js **20+** (for global `crypto`), or any browser/edge runtime with the Web Crypto API. Bun and Deno are supported.
 

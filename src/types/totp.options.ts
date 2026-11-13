@@ -1,11 +1,12 @@
 import { Algorithm } from "./algorithms.js";
 import type { Secret } from "../secret.js";
+import type { OTPWindow } from "./window.js";
 
 export type TOTPOptions = {
   algorithm: Algorithm;
   duration: number;
   digits: number;
-  window: number;
+  window: OTPWindow;
   issuer: string;
   account: string;
   secret?: Secret;
