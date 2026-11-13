@@ -1,9 +1,10 @@
 import { hmac, timingSafeEqual } from "./crypto/index.js";
-import { HOTPOptions, Algorithm } from "./types/index.js";
+import { HOTPOptions, Algorithm, OTPWindow } from "./types/index.js";
 import { encodeBytes, uintEncode } from "./encoding/index.js";
 import { padStart } from "./utils.js";
 import { Secret } from "./secret.js";
 import { resolveSecret } from "./shared/resolveSecret.js";
+import { resolveWindow } from "./shared/resolveWindow.js";
 import { hotpDefaults } from "./shared/hotpDefaults.js";
 import { URI } from "./uri.js";
 
@@ -102,7 +103,7 @@ class HOTP {
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
-    window?: number;
+    window?: OTPWindow;
   }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
     return (
@@ -130,32 +131,35 @@ class HOTP {
     counter?: number;
     digits?: number;
     algorithm?: Algorithm;
-    window?: number;
+    window?: OTPWindow;
   }): Promise<number | null> {
     const resolved = resolveSecret(this.#secret, secret);
+    const { backward, forward } = resolveWindow(window, "forward");
     if (
       await this.equals({ token, secret: resolved, counter, digits, algorithm })
     )
       return 0;
-    for (let i = 1; i <= window; i++) {
+    for (let i = 1; i <= forward || i <= backward; i++) {
       if (
-        await this.equals({
+        i <= forward &&
+        (await this.equals({
           token,
           secret: resolved,
           counter: counter + i,
           digits,
           algorithm,
-        })
+        }))
       )
         return i;
       if (
-        await this.equals({
+        i <= backward &&
+        (await this.equals({
           token,
           secret: resolved,
           counter: counter - i,
           digits,
           algorithm,
-        })
+        }))
       )
         return -i;
     }
