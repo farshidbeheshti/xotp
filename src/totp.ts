@@ -1,4 +1,9 @@
-import { TOTPOptions, Algorithm, OTPWindow } from "./types/index.js";
+import {
+  TOTPOptions,
+  TOTPVerifyResult,
+  Algorithm,
+  OTPWindow,
+} from "./types/index.js";
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
 import { resolveSecret } from "./shared/resolveSecret.js";
@@ -118,6 +123,60 @@ class TOTP {
       digits,
       window: resolveWindow(window, "symmetric"),
     });
+  }
+
+  async verify({
+    token,
+    secret,
+    timestamp = Date.now(),
+    algorithm = this.algorithm,
+    digits = this.digits,
+    duration = this.duration,
+    window = this.window,
+    afterTimeStep,
+  }: {
+    token: string;
+    secret?: Secret;
+    timestamp?: number;
+    algorithm?: Algorithm;
+    digits?: number;
+    duration?: number;
+    window?: OTPWindow;
+    afterTimeStep?: number | null;
+  }): Promise<TOTPVerifyResult> {
+    const resolved = resolveSecret(this.#secret, secret);
+    // A non-integer (e.g. NaN) would compare false against every time step
+    // and silently turn replay protection off, so fail loudly instead.
+    if (afterTimeStep != null && !Number.isSafeInteger(afterTimeStep)) {
+      throw new TypeError(
+        "afterTimeStep must be an integer: pass the timeStep returned by the last successful verify(), or omit it.",
+      );
+    }
+    const currentTimeStep = this.#calcHotpCounter({ timestamp, duration });
+    const { backward, forward } = resolveWindow(window, "symmetric");
+
+    // Same search order as compare(): current step, then +1, -1, +2, -2, ...
+    const deltas = [0];
+    for (let i = 1; i <= forward || i <= backward; i++) {
+      if (i <= forward) deltas.push(i);
+      if (i <= backward) deltas.push(-i);
+    }
+
+    for (const delta of deltas) {
+      const timeStep = currentTimeStep + delta;
+      if (afterTimeStep != null && timeStep <= afterTimeStep) continue;
+      if (
+        await this.#hotp.equals({
+          token,
+          secret: resolved,
+          counter: timeStep,
+          algorithm,
+          digits,
+        })
+      )
+        return { valid: true, timeStep, delta };
+    }
+    return { valid: false };
   }
 
   async compare({
