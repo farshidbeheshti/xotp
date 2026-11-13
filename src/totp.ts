@@ -1,7 +1,8 @@
-import { TOTPOptions, Algorithm } from "./types/index.js";
+import { TOTPOptions, Algorithm, OTPWindow } from "./types/index.js";
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
 import { resolveSecret } from "./shared/resolveSecret.js";
+import { resolveWindow } from "./shared/resolveWindow.js";
 import { totpDefaults } from "./shared/totpDefaults.js";
 import { URI } from "./uri.js";
 
@@ -36,7 +37,11 @@ class TOTP {
     } else if (generateSecret) {
       this.#secret = Secret.for(algorithm);
     }
-    this.#hotp = new HOTP({ algorithm, window, digits });
+    this.#hotp = new HOTP({
+      algorithm,
+      window: resolveWindow(window, "symmetric"),
+      digits,
+    });
   }
 
   get secret(): Secret | undefined {
@@ -102,7 +107,7 @@ class TOTP {
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-    window?: number;
+    window?: OTPWindow;
   }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
     return await this.#hotp.validate({
@@ -111,7 +116,7 @@ class TOTP {
       counter: this.#calcHotpCounter({ timestamp, duration }),
       algorithm,
       digits,
-      window: window,
+      window: resolveWindow(window, "symmetric"),
     });
   }
 
@@ -130,13 +135,13 @@ class TOTP {
     algorithm?: Algorithm;
     digits?: number;
     duration?: number;
-    window?: number;
+    window?: OTPWindow;
   }): Promise<number | null> {
     const resolved = resolveSecret(this.#secret, secret);
     return await this.#hotp.compare({
       token,
       secret: resolved,
-      window,
+      window: resolveWindow(window, "symmetric"),
       algorithm,
       digits,
       counter: this.#calcHotpCounter({ timestamp, duration }),
