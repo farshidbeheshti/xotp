@@ -550,6 +550,16 @@ If you need an algorithm that is not listed, please open an [issue][issues] for 
 
 v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` module to the Web Crypto API. This brings a few breaking changes:
 
+> [!WARNING]
+> **Check this one first — it fails silently.** `Secret.from(string)` now decodes **Base32** by default (v1 decoded **UTF-8**). If you pass raw text keys without an encoding, you get **wrong tokens with no error**. Add the encoding explicitly:
+>
+> ```diff
+> - const secret = Secret.from("my raw key");
+> + const secret = Secret.from("my raw key", "utf-8");
+> ```
+>
+> Secrets you stored with `secret.toString()` are already Base32 and keep working. Methods and options also accept a Base32 string anywhere a `Secret` is expected.
+
 - **Token methods are async.** `await` `generate`, `validate`, `compare`, and `equals` on both `TOTP` and `HOTP`. `Secret` construction, `toString`, `toKeyUri`, and `URI` parsing stay synchronous.
 
   ```diff
@@ -560,13 +570,6 @@ v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` modul
   ```
 
 - **Secrets use `Uint8Array` instead of `Buffer`.** `Secret.from(bytes)` and `new Secret({ data })` accept a `Uint8Array`; `secret.buffer` returns a `Uint8Array`. A Node `Buffer` still works anywhere a `Uint8Array` is expected.
-- **`Secret.from(string)` decodes Base32 by default** (v1 decoded UTF-8), matching `toString()`. Raw text keys need the encoding: `Secret.from(key, "utf-8")`. Methods and options also accept a Base32 string anywhere a `Secret` is expected.
-
-  ```diff
-  - const secret = Secret.from("my raw key");
-  + const secret = Secret.from("my raw key", "utf-8");
-  ```
-
 - **The HOTP window only looks ahead.** A numeric `window` on `HOTP` no longer accepts counters below the one you pass, so a used token is rejected after the counter advances. To keep the v1 behaviour, pass `window: { backward: n, forward: n }`. The TOTP window is unchanged.
 - **`window` is typed `OTPWindow`, not `number`.** The `window` option and the `window` property on `TOTP` and `HOTP` instances are now `number | { backward, forward }`. Code that reads `totp.window` or `hotp.window` into a `number` needs to handle the object form.
 - **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).
