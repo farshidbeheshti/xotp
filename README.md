@@ -161,11 +161,13 @@ The following walks through the **server-side validation** flow in more detail:
 
 First, you need a secret key with which to generate or verify a OTP token.
 
-If you already have a secret key as a string in any [supported encoding](#supported-encodings), you can use it like this:
+If you already have a secret key as a Base32 string (the format authenticator apps use and `secret.toString()` returns), you can use it like this:
 
 ```typescript
 const secret = Secret.from("<YOUR_SECRET_KEY>");
 ```
+
+You can also pass the Base32 string directly wherever a secret is expected, e.g. `totp.validate({ secret: "<YOUR_SECRET_KEY>", token })`. For keys in another [supported encoding](#supported-encodings), pass it explicitly: `Secret.from("<YOUR_SECRET_KEY>", "utf-8")`.
 
 Otherwise, use the `Secret` constructor to generate a cryptographically strong 20-byte random key:
 
@@ -435,21 +437,14 @@ const secretKey = secret.toString("hex");
 The default encoding for `toString()` is `base32` because most authentication apps, including Google Authenticator, use `base32` as the default encoding for the secret key.
 
 > [!NOTE]
-> The default encoding for the `from` method is `utf-8`, while the default encoding for `toString` is `base32`. Therefore, you need to pass the second argument in one of these two functions. This means:
+> `from` and `toString` both default to `base32`, so a stored secret round-trips without passing an encoding:
 >
 > ```typescript
-> const base32SecretKey = secret.toString();
-> const clonedSecret = Secret.from(base32SecretKey, "base32");
+> const secretKey = secret.toString();
+> const clonedSecret = Secret.from(secretKey);
 > ```
 >
-> Or vice versa:
->
-> ```typescript
-> const utf8SecretKey = secret.toString("utf-8");
-> const clonedSecret = Secret.from(utf8SecretKey);
-> ```
->
-> We recommend the former!
+> If you store the secret in another encoding, pass the same encoding to both: `Secret.from(secret.toString("hex"), "hex")`.
 
 <a id="totp_options"></a>
 
@@ -463,7 +458,7 @@ The default encoding for `toString()` is `base32` because most authentication ap
 | duration  | `number` | 30      | The duration (in seconds) for which a token is valid.                                                                                                                               |
 | issuer    | `string` | "xotp"  | The provider or service associated with the token (e.g., "Github"). This is just a display field to display the issuer's name in authenticator apps like Google Authenticator.      |
 | account         | `string`  |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
-| secret          | `Secret`  |         | Binds a secret to the instance. When set, `generate`, `validate`, and related methods can omit `secret` in each call.                                                                 |
+| secret          | `Secret` or `string` |         | Binds a secret to the instance. A string is decoded as Base32. When set, `generate`, `validate`, and related methods can omit `secret` in each call.                                  |
 | generateSecret  | `boolean` | `false` | Set to `true` when enrolling new 2FA (no `secret` yet) so one random secret is created at construction — use `TOTP.create()` or persist `instance.secret`. Keep `false` (default) for server validators that pass each user's `secret` per call. |
 
 ### HOTP
@@ -511,7 +506,7 @@ const hotp = new HOTP({ window: { backward: 1, forward: 2 } });
 | counter        | `number`  | 0       | Current counter value. Required in HOTP key URIs.                                                                                                                                   |
 | issuer         | `string`  | "xotp"  | Display label for the service name in authenticator apps.                                                                                                                           |
 | account        | `string`  |         | Display label for the user (e.g. email).                                                                                                                                            |
-| secret         | `Secret`  |         | Binds a secret to the instance so methods can omit `secret` per call.                                                                                                               |
+| secret         | `Secret` or `string` |         | Binds a secret to the instance so methods can omit `secret` per call. A string is decoded as Base32.                                                                     |
 | generateSecret | `boolean` | `false` | Set to `true` for enrollment, or use `HOTP.create()`. Keep `false` for shared server validators.                                                                                  |
 
 <a id="supported_encodings"></a>
@@ -565,6 +560,13 @@ v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` modul
   ```
 
 - **Secrets use `Uint8Array` instead of `Buffer`.** `Secret.from(bytes)` and `new Secret({ data })` accept a `Uint8Array`; `secret.buffer` returns a `Uint8Array`. A Node `Buffer` still works anywhere a `Uint8Array` is expected.
+- **`Secret.from(string)` decodes Base32 by default** (v1 decoded UTF-8), matching `toString()`. Raw text keys need the encoding: `Secret.from(key, "utf-8")`. Methods and options also accept a Base32 string anywhere a `Secret` is expected.
+
+  ```diff
+  - const secret = Secret.from("my raw key");
+  + const secret = Secret.from("my raw key", "utf-8");
+  ```
+
 - **The HOTP window only looks ahead.** A numeric `window` on `HOTP` no longer accepts counters below the one you pass, so a used token is rejected after the counter advances. To keep the v1 behaviour, pass `window: { backward: n, forward: n }`. The TOTP window is unchanged.
 - **`window` is typed `OTPWindow`, not `number`.** The `window` option and the `window` property on `TOTP` and `HOTP` instances are now `number | { backward, forward }`. Code that reads `totp.window` or `hotp.window` into a `number` needs to handle the object form.
 - **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).

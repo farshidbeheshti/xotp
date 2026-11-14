@@ -43,6 +43,22 @@ describe("instance secret", () => {
     const { counter, hotp: expected } = data[0];
     expect(await hotp.generate({ counter })).toBe(expected);
   });
+
+  test("accepts a base32 string secret in the constructor", async () => {
+    const base32 = Secret.from(secret, "ascii").toString();
+    const hotp = new HOTP({ secret: base32 });
+    const { counter, hotp: expected } = data[0];
+    expect(hotp.secret!.toString()).toBe(base32);
+    expect(await hotp.generate({ counter })).toBe(expected);
+  });
+
+  test("accepts a base32 string secret per call", async () => {
+    const base32 = Secret.from(secret, "ascii").toString();
+    const hotp = new HOTP();
+    const { counter, hotp: token } = data[0];
+    expect(await hotp.generate({ secret: base32, counter })).toBe(token);
+    expect(await hotp.validate({ token, secret: base32, counter })).toBe(true);
+  });
 });
 
 describe("validate", () => {

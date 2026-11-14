@@ -5,3 +5,4 @@ export * from "./totp.verify.js";
 export * from "./uri.js";
 export * from "./algorithms.js";
 export * from "./encoding.js";
+export * from "./secret.js";

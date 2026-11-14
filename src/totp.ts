@@ -3,10 +3,11 @@ import {
   TOTPVerifyResult,
   Algorithm,
   OTPWindow,
+  SecretInput,
 } from "./types/index.js";
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
-import { resolveSecret } from "./shared/resolveSecret.js";
+import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { totpDefaults } from "./shared/totpDefaults.js";
 import { URI } from "./uri.js";
@@ -38,7 +39,7 @@ class TOTP {
     this.issuer = issuer;
     this.account = account;
     if (secret) {
-      this.#secret = secret;
+      this.#secret = toSecret(secret);
     } else if (generateSecret) {
       this.#secret = Secret.for(algorithm);
     }
@@ -82,7 +83,7 @@ class TOTP {
     digits = this.digits,
     duration = this.duration,
   }: {
-    secret?: Secret;
+    secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -107,7 +108,7 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -136,7 +137,7 @@ class TOTP {
     afterTimeStep,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -189,7 +190,7 @@ class TOTP {
     window = this.window,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -216,7 +217,7 @@ class TOTP {
     duration = this.duration,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -260,7 +261,7 @@ class TOTP {
     duration = this.duration,
     digits = this.digits,
   }: {
-    secret?: Secret;
+    secret?: SecretInput;
     account?: string;
     issuer?: string;
     algorithm?: Algorithm;
@@ -281,7 +282,7 @@ class TOTP {
   /** @deprecated Use {@link TOTP.toKeyUri} instead. */
   keyUri(
     opts: {
-      secret?: Secret;
+      secret?: SecretInput;
       account?: string;
       issuer?: string;
       algorithm?: Algorithm;

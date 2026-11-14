@@ -1,6 +1,6 @@
 import { Algorithm } from "./algorithms.js";
-import type { Secret } from "../secret.js";
 import type { OTPWindow } from "./window.js";
+import type { SecretInput } from "./secret.js";
 
 export type HOTPOptions = {
   algorithm: Algorithm;
@@ -9,6 +9,6 @@ export type HOTPOptions = {
   window: OTPWindow;
   issuer: string;
   account: string;
-  secret?: Secret;
+  secret?: SecretInput;
   generateSecret?: boolean;
 };
