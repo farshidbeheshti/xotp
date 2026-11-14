@@ -33,6 +33,21 @@ describe("Secret", () => {
     expect(secret.toString("hex")).toBe("68656c6c6f");
   });
 
+  test("from(base32) ignores whitespace", () => {
+    expect(Secret.from("JBSW Y3DP\tEHPK\n3PXP", "base32").buffer).toEqual(
+      Secret.from("JBSWY3DPEHPK3PXP", "base32").buffer,
+    );
+  });
+
+  test.each([".", "(", "*", "?", "+", "1"])(
+    "from(base32) rejects invalid character %p",
+    (char) => {
+      expect(() => Secret.from(`JBSWY3DPEHPK3PX${char}`, "base32")).toThrow(
+        new TypeError(`Invalid base32 character: ${char}`),
+      );
+    },
+  );
+
   test.each(recommendedSizes)(
     "for(%s) creates a secret of recommended byte length",
     (algorithm, expectedLength) => {

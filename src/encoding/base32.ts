@@ -37,6 +37,7 @@ export const base32Decode = (
 ): Uint8Array => {
   const { padding, alphabet } = formats[format];
   const removedPad = base32Encoded
+    .replace(/\s+/g, "")
     .replace(new RegExp(`${padding}+$`), "")
     .toUpperCase();
   const bytesLen = ((removedPad.length * 5) / 8) | 0;
@@ -46,7 +47,7 @@ export const base32Decode = (
   let index = 0;
 
   for (let i = 0; i < removedPad.length; i++) {
-    const charNum = alphabet.search(removedPad[i]);
+    const charNum = alphabet.indexOf(removedPad[i]);
     if (charNum === -1)
       throw new TypeError(`Invalid base32 character: ${removedPad[i]}`);
     binary = (binary << 5) | charNum;
