@@ -40,7 +40,10 @@ export class Secret {
 
   static from(data: string, encoding?: Encoding): Secret;
   static from(data: Uint8Array): Secret;
-  static from(data: Uint8Array | string, encoding: Encoding = "utf-8"): Secret {
+  static from(
+    data: Uint8Array | string,
+    encoding: Encoding = "base32",
+  ): Secret {
     if (typeof data == "string") {
       return new Secret({ data: encodeBytes(data, encoding) });
     }

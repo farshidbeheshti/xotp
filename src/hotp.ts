@@ -1,9 +1,14 @@
 import { hmac, timingSafeEqual } from "./crypto/index.js";
-import { HOTPOptions, Algorithm, OTPWindow } from "./types/index.js";
+import {
+  HOTPOptions,
+  Algorithm,
+  OTPWindow,
+  SecretInput,
+} from "./types/index.js";
 import { encodeBytes, uintEncode } from "./encoding/index.js";
 import { padStart } from "./utils.js";
 import { Secret } from "./secret.js";
-import { resolveSecret } from "./shared/resolveSecret.js";
+import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { hotpDefaults } from "./shared/hotpDefaults.js";
 import { URI } from "./uri.js";
@@ -34,7 +39,7 @@ class HOTP {
     this.issuer = issuer;
     this.account = account;
     if (secret) {
-      this.#secret = secret;
+      this.#secret = toSecret(secret);
     } else if (generateSecret) {
       this.#secret = Secret.for(algorithm);
     }
@@ -72,7 +77,7 @@ class HOTP {
     algorithm = this.algorithm,
     digits = this.digits,
   }: {
-    secret?: Secret;
+    secret?: SecretInput;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -99,7 +104,7 @@ class HOTP {
     window = this.window,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -127,7 +132,7 @@ class HOTP {
     window = this.window,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     counter?: number;
     digits?: number;
     algorithm?: Algorithm;
@@ -174,7 +179,7 @@ class HOTP {
     digits = this.digits,
   }: {
     token: string;
-    secret?: Secret;
+    secret?: SecretInput;
     counter?: number;
     algorithm?: Algorithm;
     digits?: number;
@@ -197,7 +202,7 @@ class HOTP {
     counter = this.counter,
     digits = this.digits,
   }: {
-    secret?: Secret;
+    secret?: SecretInput;
     account?: string;
     issuer?: string;
     algorithm?: Algorithm;
@@ -218,7 +223,7 @@ class HOTP {
   /** @deprecated Use {@link HOTP.toKeyUri} instead. */
   keyUri(
     opts: {
-      secret?: Secret;
+      secret?: SecretInput;
       account?: string;
       issuer?: string;
       algorithm?: Algorithm;
