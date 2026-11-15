@@ -38,7 +38,9 @@ class HOTP {
     this.counter = counter;
     this.issuer = issuer;
     this.account = account;
-    if (secret) {
+    // `!= null`, not truthiness: an empty string must be rejected by
+    // toSecret(), not skipped (and replaced by a generated secret).
+    if (secret != null) {
       this.#secret = toSecret(secret);
     } else if (generateSecret) {
       this.#secret = Secret.for(algorithm);

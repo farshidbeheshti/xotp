@@ -129,6 +129,50 @@ describe("instance secret", () => {
   });
 });
 
+describe("empty secret", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const { timestamp: seconds, totp: token } = data[0];
+  const timestamp = seconds * 1000;
+  const bound = () => new TOTP({ secret: secretKey, digits: 8, duration });
+
+  test("the constructor rejects an empty string secret", () => {
+    expect(() => new TOTP({ secret: "" })).toThrow(/Secret must not be empty/);
+  });
+
+  test("an empty string secret is not replaced by a generated one", () => {
+    expect(() => new TOTP({ secret: "", generateSecret: true })).toThrow(
+      /Secret must not be empty/,
+    );
+    expect(() => TOTP.create({ secret: "" })).toThrow(
+      /Secret must not be empty/,
+    );
+  });
+
+  test.each<[string, (totp: TOTP) => unknown]>([
+    ["generate", (totp) => totp.generate({ secret: "", timestamp })],
+    ["validate", (totp) => totp.validate({ secret: "", token, timestamp })],
+    ["verify", (totp) => totp.verify({ secret: "", token, timestamp })],
+    ["compare", (totp) => totp.compare({ secret: "", token, timestamp })],
+    ["equals", (totp) => totp.equals({ secret: "", token, timestamp })],
+    ["toKeyUri", async (totp) => totp.toKeyUri({ secret: "" })],
+  ])(
+    "%s rejects an empty string secret instead of using the instance secret",
+    async (_name, call) => {
+      await expect(call(bound())).rejects.toThrow(/Secret must not be empty/);
+    },
+  );
+
+  test.each([undefined, null])(
+    "a %p secret per call still uses the instance secret",
+    async (omitted) => {
+      const totp = bound();
+      expect(
+        await totp.validate({ secret: omitted as undefined, token, timestamp }),
+      ).toBe(true);
+    },
+  );
+});
+
 describe("window", () => {
   const secretKey = Secret.from(secret.sha1, "ascii");
   // Milliseconds at the start of the given time step.

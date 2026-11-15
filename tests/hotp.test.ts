@@ -61,6 +61,48 @@ describe("instance secret", () => {
   });
 });
 
+describe("empty secret", () => {
+  const secretKey = Secret.from(secret, "ascii");
+  const { counter, hotp: token } = data[0];
+  const bound = () => new HOTP({ secret: secretKey });
+
+  test("the constructor rejects an empty string secret", () => {
+    expect(() => new HOTP({ secret: "" })).toThrow(/Secret must not be empty/);
+  });
+
+  test("an empty string secret is not replaced by a generated one", () => {
+    expect(() => new HOTP({ secret: "", generateSecret: true })).toThrow(
+      /Secret must not be empty/,
+    );
+    expect(() => HOTP.create({ secret: "" })).toThrow(
+      /Secret must not be empty/,
+    );
+  });
+
+  test.each<[string, (hotp: HOTP) => unknown]>([
+    ["generate", (hotp) => hotp.generate({ secret: "", counter })],
+    ["validate", (hotp) => hotp.validate({ secret: "", token, counter })],
+    ["compare", (hotp) => hotp.compare({ secret: "", token, counter })],
+    ["equals", (hotp) => hotp.equals({ secret: "", token, counter })],
+    ["toKeyUri", async (hotp) => hotp.toKeyUri({ secret: "" })],
+  ])(
+    "%s rejects an empty string secret instead of using the instance secret",
+    async (_name, call) => {
+      await expect(call(bound())).rejects.toThrow(/Secret must not be empty/);
+    },
+  );
+
+  test.each([undefined, null])(
+    "a %p secret per call still uses the instance secret",
+    async (omitted) => {
+      const hotp = bound();
+      expect(
+        await hotp.validate({ secret: omitted as undefined, token, counter }),
+      ).toBe(true);
+    },
+  );
+});
+
 describe("validate", () => {
   test("returns true for a matching token and false otherwise", async () => {
     const secretKey = Secret.from(secret, "ascii");
