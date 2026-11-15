@@ -717,9 +717,7 @@ describe("digits", () => {
     expect(await totp.generate({ timestamp, digits: 6 })).toBe("287082");
     expect(await totp.generate({ timestamp, digits: 10 })).toBe("1094287082");
     // There is no upper limit: digits beyond the 10th are leading zeros.
-    expect(await totp.generate({ timestamp, digits: 12 })).toBe(
-      "001094287082",
-    );
+    expect(await totp.generate({ timestamp, digits: 12 })).toBe("001094287082");
   });
 
   test("validates tokens of the configured length", async () => {
@@ -822,6 +820,71 @@ describe("token format", () => {
     } finally {
       sign.mockRestore();
     }
+  });
+});
+
+describe("duration", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const timestamp = 59_000;
+
+  test("accepts a fractional duration above 0", async () => {
+    const totp = new TOTP({ secret: secretKey, duration: 0.5 });
+    const token = await totp.generate({ timestamp });
+    expect(token).toEqual(expect.any(String));
+    expect(await totp.validate({ token, timestamp })).toBe(true);
+  });
+
+  test.each([0, -1, NaN, Infinity, -Infinity, "30"])(
+    "the constructor rejects a duration of %p",
+    (duration) => {
+      expect(() => new TOTP({ duration: duration as number })).toThrow(
+        /Invalid duration: .* Must be a finite number greater than 0/,
+      );
+      expect(() => TOTP.create({ duration: duration as number })).toThrow(
+        /Invalid duration: /,
+      );
+    },
+  );
+
+  test.each<[string, (totp: TOTP, duration?: number) => unknown]>([
+    ["generate", (totp, duration) => totp.generate({ timestamp, duration })],
+    [
+      "validate",
+      (totp, duration) =>
+        totp.validate({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "verify",
+      (totp, duration) =>
+        totp.verify({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "compare",
+      (totp, duration) =>
+        totp.compare({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "equals",
+      (totp, duration) =>
+        totp.equals({ token: "00000000", timestamp, duration }),
+    ],
+    ["timeUsed", (totp, duration) => totp.timeUsed({ timestamp, duration })],
+    [
+      "timeRemaining",
+      (totp, duration) => totp.timeRemaining({ timestamp, duration }),
+    ],
+    ["toKeyUri", (totp, duration) => totp.toKeyUri({ duration })],
+  ])("%s rejects an invalid duration", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    // Wrap so both sync throws (timeUsed) and async rejects (generate) work.
+    const run = (duration?: number) =>
+      Promise.resolve().then(() => call(totp, duration));
+    // Per call.
+    await expect(run(0)).rejects.toThrow(/Invalid duration: 0/);
+    await expect(run(NaN)).rejects.toThrow(/Invalid duration: NaN/);
+    // Set on the instance after construction.
+    totp.duration = 0;
+    await expect(run()).rejects.toThrow(/Invalid duration: 0/);
   });
 });
 

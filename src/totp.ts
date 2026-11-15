@@ -8,6 +8,7 @@ import {
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
 import { assertDigits } from "./shared/assertDigits.js";
+import { assertDuration } from "./shared/assertDuration.js";
 import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { totpDefaults } from "./shared/totpDefaults.js";
@@ -33,6 +34,8 @@ class TOTP {
     secret,
     generateSecret = false,
   }: Partial<TOTPOptions> = {}) {
+    // Fail at construction on an invalid duration, not on the first generate.
+    assertDuration(duration);
     this.algorithm = algorithm;
     this.digits = digits;
     this.window = window;
@@ -246,6 +249,7 @@ class TOTP {
     timestamp?: number;
     duration?: number;
   } = {}): number {
+    assertDuration(duration);
     return ((timestamp / 1000) | 0) % duration;
   }
 
@@ -256,6 +260,7 @@ class TOTP {
     timestamp?: number;
     duration?: number;
   } = {}): number {
+    assertDuration(duration);
     return duration - this.timeUsed({ timestamp, duration });
   }
 
@@ -274,6 +279,7 @@ class TOTP {
     duration?: number;
     digits?: number;
   } = {}): string {
+    assertDuration(duration);
     return URI.format({
       type: "totp",
       secret: resolveSecret(this.#secret, secret),
@@ -306,6 +312,9 @@ class TOTP {
     timestamp: number;
     duration: number;
   }) {
+    // Covers generate/validate/verify/compare/equals, including a per-call
+    // duration and a value assigned to instance.duration after construction.
+    assertDuration(duration);
     return (timestamp / 1000 / duration) | 0;
   }
 }
