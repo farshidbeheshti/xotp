@@ -25,6 +25,15 @@ describe("URI.parse", () => {
     );
   });
 
+  test("throws when secret decodes to no bytes", () => {
+    expect(() => URI.parse("otpauth://totp/user?secret=%20")).toThrow(
+      /Secret must not be empty/,
+    );
+    expect(() => URI.parse("otpauth://totp/user?secret====")).toThrow(
+      /Secret must not be empty/,
+    );
+  });
+
   test("throws on invalid base32 secret", () => {
     expect(() =>
       URI.parse("otpauth://totp/user?secret=!!!!"),

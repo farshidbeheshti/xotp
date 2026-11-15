@@ -27,6 +27,9 @@ export class Secret {
     } else {
       throw new TypeError("Constructor arguments are not valid.");
     }
+    if (bytes.byteLength === 0) {
+      throw new TypeError("Secret must not be empty.");
+    }
     this.#bytes = bytes;
   }
 
