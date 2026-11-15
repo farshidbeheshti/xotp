@@ -8,6 +8,8 @@ import {
 import { encodeBytes, uintEncode } from "./encoding/index.js";
 import { padStart } from "./utils.js";
 import { Secret } from "./secret.js";
+import { assertDigits } from "./shared/assertDigits.js";
+import { isWellFormedToken } from "./shared/isWellFormedToken.js";
 import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { hotpDefaults } from "./shared/hotpDefaults.js";
@@ -32,8 +34,9 @@ class HOTP {
     secret,
     generateSecret = false,
   }: Partial<HOTPOptions> = {}) {
-    // Fail at construction on an invalid window, not on the first validation.
+    // Fail at construction on an invalid window or digits, not on first use.
     resolveWindow(window, "forward");
+    assertDigits(digits);
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;
@@ -87,6 +90,7 @@ class HOTP {
     digits?: number;
   } = {}): Promise<string> {
     const resolved = resolveSecret(this.#secret, secret);
+    assertDigits(digits);
     const digest = await hmac(algorithm, resolved.buffer, uintEncode(counter));
 
     const offset = digest[digest.byteLength - 1] & 0xf;
@@ -189,6 +193,11 @@ class HOTP {
     digits?: number;
   }): Promise<boolean> {
     const resolved = resolveSecret(this.#secret, secret);
+    // Checked before the token, so invalid digits throw even for a bad token.
+    assertDigits(digits);
+    // The token is end-user input: a malformed one is a wrong token, not an
+    // error, and it can never match, so there is no HMAC to compute.
+    if (!isWellFormedToken(token, digits)) return false;
     const generatedToken = await this.generate({
       secret: resolved,
       counter,

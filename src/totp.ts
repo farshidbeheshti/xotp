@@ -7,6 +7,7 @@ import {
 } from "./types/index.js";
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
+import { assertDigits } from "./shared/assertDigits.js";
 import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { totpDefaults } from "./shared/totpDefaults.js";
@@ -155,6 +156,9 @@ class TOTP {
         "afterTimeStep must be an integer: pass the timeStep returned by the last successful verify(), or omit it.",
       );
     }
+    // Checked here as well as in equals(), which is never reached when
+    // afterTimeStep rules out every time step in the window.
+    assertDigits(digits);
     const currentTimeStep = this.#calcHotpCounter({ timestamp, duration });
     const { backward, forward } = resolveWindow(window, "symmetric");
 

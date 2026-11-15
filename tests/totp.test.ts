@@ -705,6 +705,126 @@ describe("verify", () => {
   });
 });
 
+describe("digits", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  // RFC 6238: at 59s the SHA-1 token is "94287082", cut from the truncated
+  // decimal 1094287082 (the RFC 4226 value for counter 1).
+  const timestamp = 59_000;
+
+  test("generates tokens of any positive length", async () => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    expect(await totp.generate({ timestamp, digits: 1 })).toBe("2");
+    expect(await totp.generate({ timestamp, digits: 6 })).toBe("287082");
+    expect(await totp.generate({ timestamp, digits: 10 })).toBe("1094287082");
+    // There is no upper limit: digits beyond the 10th are leading zeros.
+    expect(await totp.generate({ timestamp, digits: 12 })).toBe(
+      "001094287082",
+    );
+  });
+
+  test("validates tokens of the configured length", async () => {
+    const oneDigit = new TOTP({ secret: secretKey, duration, digits: 1 });
+    expect(await oneDigit.validate({ token: "2", timestamp })).toBe(true);
+    const tenDigits = new TOTP({ secret: secretKey, duration, digits: 10 });
+    expect(await tenDigits.validate({ token: "1094287082", timestamp })).toBe(
+      true,
+    );
+    const twelveDigits = new TOTP({ secret: secretKey, duration, digits: 12 });
+    expect(
+      await twelveDigits.validate({ token: "001094287082", timestamp }),
+    ).toBe(true);
+  });
+
+  test.each([0, -1, 6.5, NaN, Infinity, "6"])(
+    "the constructor rejects digits of %p",
+    (digits) => {
+      expect(() => new TOTP({ digits: digits as number })).toThrow(
+        /Invalid digits: .* Must be a positive integer/,
+      );
+      expect(() => TOTP.create({ digits: digits as number })).toThrow(
+        /Invalid digits: /,
+      );
+    },
+  );
+
+  // A malformed token must not hide invalid digits behind a `false` result.
+  const token = "not a token";
+  test.each<[string, (totp: TOTP, digits?: number) => Promise<unknown>]>([
+    ["generate", (totp, digits) => totp.generate({ timestamp, digits })],
+    ["validate", (totp, digits) => totp.validate({ token, digits })],
+    ["verify", (totp, digits) => totp.verify({ token, digits })],
+    ["compare", (totp, digits) => totp.compare({ token, digits })],
+    ["equals", (totp, digits) => totp.equals({ token, digits })],
+  ])("%s rejects invalid digits", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    // Per call.
+    await expect(call(totp, 0)).rejects.toThrow(/Invalid digits: 0/);
+    await expect(call(totp, 6.5)).rejects.toThrow(/Invalid digits: 6\.5/);
+    // Set on the instance after construction.
+    totp.digits = -1;
+    await expect(call(totp)).rejects.toThrow(/Invalid digits: -1/);
+  });
+
+  test("verify rejects invalid digits when afterTimeStep excludes every step", async () => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    await expect(
+      totp.verify({ token, timestamp, digits: 0, afterTimeStep: 1000 }),
+    ).rejects.toThrow(/Invalid digits: 0/);
+  });
+});
+
+describe("token format", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+  // RFC 6238: at 59s the 8-digit SHA-1 token is "94287082".
+  const timestamp = 59_000;
+
+  test.each<[string, unknown]>([
+    ["with a space", "9428 7082"],
+    ["with a dash", "9428-7082"],
+    ["with a trailing newline", "94287082\n"],
+    ["with a letter", "9428708A"],
+    ["cut short", "9428708"],
+    ["with an extra digit", "942870820"],
+    ["passed as a number", 94287082],
+    ["that is empty", ""],
+    ["that is undefined", undefined],
+    ["that is null", null],
+  ])("a token %s is never valid", async (_name, malformed) => {
+    const token = malformed as string;
+    expect(await totp.validate({ token, timestamp })).toBe(false);
+    expect(await totp.verify({ token, timestamp })).toEqual({ valid: false });
+    expect(await totp.compare({ token, timestamp })).toBe(null);
+    expect(await totp.equals({ token, timestamp })).toBe(false);
+  });
+
+  test("a token must be exactly as long as digits", async () => {
+    expect(await totp.validate({ token: "94287082", timestamp })).toBe(true);
+    expect(await totp.validate({ token: "287082", timestamp })).toBe(false);
+    expect(await totp.validate({ token: "287082", timestamp, digits: 6 })).toBe(
+      true,
+    );
+    expect(
+      await totp.validate({ token: "94287082", timestamp, digits: 6 }),
+    ).toBe(false);
+  });
+
+  test("a malformed token is rejected without computing any HMAC", async () => {
+    const sign = jest.spyOn(globalThis.crypto.subtle, "sign");
+    try {
+      expect(
+        await totp.validate({ token: "9428 7082", timestamp, window: 100 }),
+      ).toBe(false);
+      expect(
+        await totp.verify({ token: "9428 7082", timestamp, window: 100 }),
+      ).toEqual({ valid: false });
+      expect(sign).not.toHaveBeenCalled();
+    } finally {
+      sign.mockRestore();
+    }
+  });
+});
+
 describe("timeUsed and timeRemaining", () => {
   test("reports elapsed and remaining seconds in the current step", () => {
     const totp = new TOTP({ duration: 30 });

@@ -274,6 +274,118 @@ describe("window", () => {
   });
 });
 
+describe("digits", () => {
+  const secretKey = Secret.from(secret, "ascii");
+
+  test("generates tokens of any positive length", async () => {
+    const hotp = new HOTP({ secret: secretKey });
+    // RFC 4226 Appendix D: counter 0 truncates to the decimal 1284755224.
+    expect(await hotp.generate({ counter: 0, digits: 1 })).toBe("4");
+    expect(await hotp.generate({ counter: 0, digits: 10 })).toBe("1284755224");
+    // Counter 7 truncates to 82162583, which is zero-padded to 10 digits.
+    expect(await hotp.generate({ counter: 7, digits: 10 })).toBe("0082162583");
+    // There is no upper limit: digits beyond the 10th are leading zeros.
+    expect(await hotp.generate({ counter: 0, digits: 12 })).toBe(
+      "001284755224",
+    );
+  });
+
+  test("validates tokens of the configured length", async () => {
+    const oneDigit = new HOTP({ secret: secretKey, digits: 1 });
+    expect(await oneDigit.validate({ token: "4", counter: 0 })).toBe(true);
+    const tenDigits = new HOTP({ secret: secretKey, digits: 10 });
+    expect(await tenDigits.validate({ token: "1284755224", counter: 0 })).toBe(
+      true,
+    );
+    const twelveDigits = new HOTP({ secret: secretKey, digits: 12 });
+    expect(
+      await twelveDigits.validate({ token: "001284755224", counter: 0 }),
+    ).toBe(true);
+  });
+
+  test.each([0, -1, 6.5, NaN, Infinity, "6"])(
+    "the constructor rejects digits of %p",
+    (digits) => {
+      expect(() => new HOTP({ digits: digits as number })).toThrow(
+        /Invalid digits: .* Must be a positive integer/,
+      );
+      expect(() => HOTP.create({ digits: digits as number })).toThrow(
+        /Invalid digits: /,
+      );
+    },
+  );
+
+  // A malformed token must not hide invalid digits behind a `false` result.
+  const token = "not a token";
+  test.each<[string, (hotp: HOTP, digits?: number) => Promise<unknown>]>([
+    ["generate", (hotp, digits) => hotp.generate({ counter: 0, digits })],
+    ["validate", (hotp, digits) => hotp.validate({ token, digits })],
+    ["compare", (hotp, digits) => hotp.compare({ token, digits })],
+    ["equals", (hotp, digits) => hotp.equals({ token, digits })],
+  ])("%s rejects invalid digits", async (_name, call) => {
+    const hotp = new HOTP({ secret: secretKey });
+    // Per call.
+    await expect(call(hotp, 0)).rejects.toThrow(/Invalid digits: 0/);
+    await expect(call(hotp, 6.5)).rejects.toThrow(/Invalid digits: 6\.5/);
+    // Set on the instance after construction.
+    hotp.digits = -1;
+    await expect(call(hotp)).rejects.toThrow(/Invalid digits: -1/);
+  });
+});
+
+describe("token format", () => {
+  const secretKey = Secret.from(secret, "ascii");
+  const hotp = new HOTP({ secret: secretKey });
+
+  // "755224" is the RFC 4226 token for counter 0.
+  test.each<[string, unknown]>([
+    ["with a space", "755 224"],
+    ["with a dash", "755-224"],
+    ["with a trailing newline", "755224\n"],
+    ["with a letter", "75522A"],
+    ["cut short", "75522"],
+    ["with an extra digit", "7552240"],
+    ["passed as a number", 755224],
+    ["that is empty", ""],
+    ["that is undefined", undefined],
+    ["that is null", null],
+  ])("a token %s is never valid", async (_name, malformed) => {
+    const token = malformed as string;
+    expect(await hotp.validate({ token, counter: 0 })).toBe(false);
+    expect(await hotp.compare({ token, counter: 0 })).toBe(null);
+    expect(await hotp.equals({ token, counter: 0 })).toBe(false);
+  });
+
+  test("a token must be exactly as long as digits", async () => {
+    // For counter 0 the 6-digit token is "755224" and the 8-digit "84755224".
+    expect(await hotp.validate({ token: "755224", counter: 0 })).toBe(true);
+    expect(await hotp.validate({ token: "84755224", counter: 0 })).toBe(false);
+    expect(
+      await hotp.validate({ token: "84755224", counter: 0, digits: 8 }),
+    ).toBe(true);
+    expect(
+      await hotp.validate({ token: "755224", counter: 0, digits: 8 }),
+    ).toBe(false);
+  });
+
+  test("a malformed token is rejected without computing any HMAC", async () => {
+    const sign = jest.spyOn(globalThis.crypto.subtle, "sign");
+    try {
+      expect(
+        await hotp.validate({ token: "755 224", counter: 0, window: 100 }),
+      ).toBe(false);
+      expect(sign).not.toHaveBeenCalled();
+      // A well-formed wrong token does search the window.
+      expect(
+        await hotp.validate({ token: "000000", counter: 0, window: 2 }),
+      ).toBe(false);
+      expect(sign).toHaveBeenCalledTimes(3);
+    } finally {
+      sign.mockRestore();
+    }
+  });
+});
+
 describe("toKeyUri", () => {
   test("deprecated keyUri delegates to toKeyUri", () => {
     const secretKey = Secret.from(secret, "ascii");
