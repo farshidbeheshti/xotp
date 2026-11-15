@@ -32,6 +32,8 @@ class HOTP {
     secret,
     generateSecret = false,
   }: Partial<HOTPOptions> = {}) {
+    // Fail at construction on an invalid window, not on the first validation.
+    resolveWindow(window, "forward");
     this.digits = digits;
     this.algorithm = algorithm;
     this.window = window;

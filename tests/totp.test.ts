@@ -310,6 +310,60 @@ describe("window", () => {
       }),
     ).toBe(false);
   });
+
+  test("accepts a window at the cap of 100 time steps", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: 100,
+    });
+    const timestamp = at(200);
+    expect(await totp.compare({ token: await tokenFor(100), timestamp })).toBe(
+      -100,
+    );
+    expect(await totp.compare({ token: await tokenFor(300), timestamp })).toBe(
+      100,
+    );
+    expect(await totp.compare({ token: await tokenFor(301), timestamp })).toBe(
+      null,
+    );
+  });
+
+  test.each([NaN, Infinity, -1, 1.5, 101, "1"])(
+    "the constructor rejects a window of %p",
+    (window) => {
+      expect(() => new TOTP({ window: window as number })).toThrow(
+        /Invalid window: .* Must be an integer from 0 to 100/,
+      );
+      expect(() => TOTP.create({ window: window as number })).toThrow(
+        /Invalid window: /,
+      );
+    },
+  );
+
+  test("the constructor rejects an invalid backward or forward size", () => {
+    expect(() => new TOTP({ window: { backward: -1, forward: 1 } })).toThrow(
+      /Invalid window\.backward: -1/,
+    );
+    expect(() => new TOTP({ window: { backward: 1, forward: 101 } })).toThrow(
+      /Invalid window\.forward: 101/,
+    );
+  });
+
+  test.each<[string, (totp: TOTP, window?: number) => Promise<unknown>]>([
+    ["validate", (totp, window) => totp.validate({ token: "0", window })],
+    ["verify", (totp, window) => totp.verify({ token: "0", window })],
+    ["compare", (totp, window) => totp.compare({ token: "0", window })],
+  ])("%s rejects an invalid window", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    // Per call.
+    await expect(call(totp, 101)).rejects.toThrow(/Invalid window: 101/);
+    await expect(call(totp, NaN)).rejects.toThrow(/Invalid window: NaN/);
+    // Set on the instance after construction.
+    totp.window = 5000;
+    await expect(call(totp)).rejects.toThrow(/Invalid window: 5000/);
+  });
 });
 
 describe("verify", () => {
