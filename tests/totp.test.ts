@@ -99,6 +99,34 @@ describe("instance secret", () => {
       true,
     );
   });
+
+  test("accepts a base32 string secret in the constructor", async () => {
+    const base32 = Secret.from(secret.sha1, "ascii").toString();
+    const totp = new TOTP({ secret: base32, digits: 8, duration });
+    const { timestamp, totp: token } = data[0];
+    expect(totp.secret!.toString()).toBe(base32);
+    expect(await totp.validate({ token, timestamp: timestamp * 1000 })).toBe(
+      true,
+    );
+  });
+
+  test("accepts a base32 string secret per call", async () => {
+    const base32 = Secret.from(secret.sha1, "ascii").toString();
+    const totp = new TOTP({ digits: 8, duration });
+    const { timestamp, totp: token } = data[0];
+    expect(
+      await totp.generate({ secret: base32, timestamp: timestamp * 1000 }),
+    ).toBe(token);
+    expect(
+      await totp.verify({ token, secret: base32, timestamp: timestamp * 1000 }),
+    ).toMatchObject({ valid: true });
+  });
+
+  test("rejects an invalid base32 string secret", () => {
+    expect(() => new TOTP({ secret: "not a secret!" })).toThrow(
+      /Invalid base32 character/,
+    );
+  });
 });
 
 describe("window", () => {

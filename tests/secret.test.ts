@@ -33,6 +33,17 @@ describe("Secret", () => {
     expect(secret.toString("hex")).toBe("68656c6c6f");
   });
 
+  test("from(string) defaults to base32", () => {
+    expect(Secret.from("JBSWY3DPEHPK3PXP").buffer).toEqual(
+      Secret.from("JBSWY3DPEHPK3PXP", "base32").buffer,
+    );
+  });
+
+  test("from(secret.toString()) round-trips", () => {
+    const secret = new Secret();
+    expect(Secret.from(secret.toString()).buffer).toEqual(secret.buffer);
+  });
+
   test("from(base32) ignores whitespace", () => {
     expect(Secret.from("JBSW Y3DP\tEHPK\n3PXP", "base32").buffer).toEqual(
       Secret.from("JBSWY3DPEHPK3PXP", "base32").buffer,
