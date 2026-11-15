@@ -22,6 +22,21 @@ describe("Secret", () => {
     );
   });
 
+  test.each<[string, () => Secret]>([
+    ["from('')", () => Secret.from("")],
+    ["from(whitespace-only base32)", () => Secret.from(" \t\n")],
+    ["from(padding-only base32)", () => Secret.from("====")],
+    ["from('', 'utf-8')", () => Secret.from("", "utf-8")],
+    ["from('', 'hex')", () => Secret.from("", "hex")],
+    ["from(empty Uint8Array)", () => Secret.from(new Uint8Array(0))],
+    [
+      "new Secret({ data: empty })",
+      () => new Secret({ data: new Uint8Array(0) }),
+    ],
+  ])("%s rejects an empty secret", (_name, create) => {
+    expect(create).toThrow(new TypeError("Secret must not be empty."));
+  });
+
   test("from(Buffer) wraps the buffer", () => {
     const buf = Buffer.from("hello");
     expect(Secret.from(buf).buffer).toEqual(buf);

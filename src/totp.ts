@@ -7,6 +7,8 @@ import {
 } from "./types/index.js";
 import { HOTP } from "./hotp.js";
 import { Secret } from "./secret.js";
+import { assertDigits } from "./shared/assertDigits.js";
+import { assertDuration } from "./shared/assertDuration.js";
 import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { totpDefaults } from "./shared/totpDefaults.js";
@@ -32,13 +34,17 @@ class TOTP {
     secret,
     generateSecret = false,
   }: Partial<TOTPOptions> = {}) {
+    // Fail at construction on an invalid duration, not on the first generate.
+    assertDuration(duration);
     this.algorithm = algorithm;
     this.digits = digits;
     this.window = window;
     this.duration = duration;
     this.issuer = issuer;
     this.account = account;
-    if (secret) {
+    // `!= null`, not truthiness: an empty string must be rejected by
+    // toSecret(), not skipped (and replaced by a generated secret).
+    if (secret != null) {
       this.#secret = toSecret(secret);
     } else if (generateSecret) {
       this.#secret = Secret.for(algorithm);
@@ -153,6 +159,9 @@ class TOTP {
         "afterTimeStep must be an integer: pass the timeStep returned by the last successful verify(), or omit it.",
       );
     }
+    // Checked here as well as in equals(), which is never reached when
+    // afterTimeStep rules out every time step in the window.
+    assertDigits(digits);
     const currentTimeStep = this.#calcHotpCounter({ timestamp, duration });
     const { backward, forward } = resolveWindow(window, "symmetric");
 
@@ -240,6 +249,7 @@ class TOTP {
     timestamp?: number;
     duration?: number;
   } = {}): number {
+    assertDuration(duration);
     return ((timestamp / 1000) | 0) % duration;
   }
 
@@ -250,6 +260,7 @@ class TOTP {
     timestamp?: number;
     duration?: number;
   } = {}): number {
+    assertDuration(duration);
     return duration - this.timeUsed({ timestamp, duration });
   }
 
@@ -268,6 +279,7 @@ class TOTP {
     duration?: number;
     digits?: number;
   } = {}): string {
+    assertDuration(duration);
     return URI.format({
       type: "totp",
       secret: resolveSecret(this.#secret, secret),
@@ -300,6 +312,9 @@ class TOTP {
     timestamp: number;
     duration: number;
   }) {
+    // Covers generate/validate/verify/compare/equals, including a per-call
+    // duration and a value assigned to instance.duration after construction.
+    assertDuration(duration);
     return (timestamp / 1000 / duration) | 0;
   }
 }

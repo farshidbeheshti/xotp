@@ -129,6 +129,50 @@ describe("instance secret", () => {
   });
 });
 
+describe("empty secret", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const { timestamp: seconds, totp: token } = data[0];
+  const timestamp = seconds * 1000;
+  const bound = () => new TOTP({ secret: secretKey, digits: 8, duration });
+
+  test("the constructor rejects an empty string secret", () => {
+    expect(() => new TOTP({ secret: "" })).toThrow(/Secret must not be empty/);
+  });
+
+  test("an empty string secret is not replaced by a generated one", () => {
+    expect(() => new TOTP({ secret: "", generateSecret: true })).toThrow(
+      /Secret must not be empty/,
+    );
+    expect(() => TOTP.create({ secret: "" })).toThrow(
+      /Secret must not be empty/,
+    );
+  });
+
+  test.each<[string, (totp: TOTP) => unknown]>([
+    ["generate", (totp) => totp.generate({ secret: "", timestamp })],
+    ["validate", (totp) => totp.validate({ secret: "", token, timestamp })],
+    ["verify", (totp) => totp.verify({ secret: "", token, timestamp })],
+    ["compare", (totp) => totp.compare({ secret: "", token, timestamp })],
+    ["equals", (totp) => totp.equals({ secret: "", token, timestamp })],
+    ["toKeyUri", async (totp) => totp.toKeyUri({ secret: "" })],
+  ])(
+    "%s rejects an empty string secret instead of using the instance secret",
+    async (_name, call) => {
+      await expect(call(bound())).rejects.toThrow(/Secret must not be empty/);
+    },
+  );
+
+  test.each([undefined, null])(
+    "a %p secret per call still uses the instance secret",
+    async (omitted) => {
+      const totp = bound();
+      expect(
+        await totp.validate({ secret: omitted as undefined, token, timestamp }),
+      ).toBe(true);
+    },
+  );
+});
+
 describe("window", () => {
   const secretKey = Secret.from(secret.sha1, "ascii");
   // Milliseconds at the start of the given time step.
@@ -265,6 +309,60 @@ describe("window", () => {
         window: { backward: 0, forward: 1 },
       }),
     ).toBe(false);
+  });
+
+  test("accepts a window at the cap of 100 time steps", async () => {
+    const totp = new TOTP({
+      secret: secretKey,
+      digits: 8,
+      duration,
+      window: 100,
+    });
+    const timestamp = at(200);
+    expect(await totp.compare({ token: await tokenFor(100), timestamp })).toBe(
+      -100,
+    );
+    expect(await totp.compare({ token: await tokenFor(300), timestamp })).toBe(
+      100,
+    );
+    expect(await totp.compare({ token: await tokenFor(301), timestamp })).toBe(
+      null,
+    );
+  });
+
+  test.each([NaN, Infinity, -1, 1.5, 101, "1"])(
+    "the constructor rejects a window of %p",
+    (window) => {
+      expect(() => new TOTP({ window: window as number })).toThrow(
+        /Invalid window: .* Must be an integer from 0 to 100/,
+      );
+      expect(() => TOTP.create({ window: window as number })).toThrow(
+        /Invalid window: /,
+      );
+    },
+  );
+
+  test("the constructor rejects an invalid backward or forward size", () => {
+    expect(() => new TOTP({ window: { backward: -1, forward: 1 } })).toThrow(
+      /Invalid window\.backward: -1/,
+    );
+    expect(() => new TOTP({ window: { backward: 1, forward: 101 } })).toThrow(
+      /Invalid window\.forward: 101/,
+    );
+  });
+
+  test.each<[string, (totp: TOTP, window?: number) => Promise<unknown>]>([
+    ["validate", (totp, window) => totp.validate({ token: "0", window })],
+    ["verify", (totp, window) => totp.verify({ token: "0", window })],
+    ["compare", (totp, window) => totp.compare({ token: "0", window })],
+  ])("%s rejects an invalid window", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    // Per call.
+    await expect(call(totp, 101)).rejects.toThrow(/Invalid window: 101/);
+    await expect(call(totp, NaN)).rejects.toThrow(/Invalid window: NaN/);
+    // Set on the instance after construction.
+    totp.window = 5000;
+    await expect(call(totp)).rejects.toThrow(/Invalid window: 5000/);
   });
 });
 
@@ -604,6 +702,189 @@ describe("verify", () => {
     expect(await totp.compare({ token, secret: secretKey, timestamp })).toBe(
       -1,
     );
+  });
+});
+
+describe("digits", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  // RFC 6238: at 59s the SHA-1 token is "94287082", cut from the truncated
+  // decimal 1094287082 (the RFC 4226 value for counter 1).
+  const timestamp = 59_000;
+
+  test("generates tokens of any positive length", async () => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    expect(await totp.generate({ timestamp, digits: 1 })).toBe("2");
+    expect(await totp.generate({ timestamp, digits: 6 })).toBe("287082");
+    expect(await totp.generate({ timestamp, digits: 10 })).toBe("1094287082");
+    // There is no upper limit: digits beyond the 10th are leading zeros.
+    expect(await totp.generate({ timestamp, digits: 12 })).toBe("001094287082");
+  });
+
+  test("validates tokens of the configured length", async () => {
+    const oneDigit = new TOTP({ secret: secretKey, duration, digits: 1 });
+    expect(await oneDigit.validate({ token: "2", timestamp })).toBe(true);
+    const tenDigits = new TOTP({ secret: secretKey, duration, digits: 10 });
+    expect(await tenDigits.validate({ token: "1094287082", timestamp })).toBe(
+      true,
+    );
+    const twelveDigits = new TOTP({ secret: secretKey, duration, digits: 12 });
+    expect(
+      await twelveDigits.validate({ token: "001094287082", timestamp }),
+    ).toBe(true);
+  });
+
+  test.each([0, -1, 6.5, NaN, Infinity, "6"])(
+    "the constructor rejects digits of %p",
+    (digits) => {
+      expect(() => new TOTP({ digits: digits as number })).toThrow(
+        /Invalid digits: .* Must be a positive integer/,
+      );
+      expect(() => TOTP.create({ digits: digits as number })).toThrow(
+        /Invalid digits: /,
+      );
+    },
+  );
+
+  // A malformed token must not hide invalid digits behind a `false` result.
+  const token = "not a token";
+  test.each<[string, (totp: TOTP, digits?: number) => Promise<unknown>]>([
+    ["generate", (totp, digits) => totp.generate({ timestamp, digits })],
+    ["validate", (totp, digits) => totp.validate({ token, digits })],
+    ["verify", (totp, digits) => totp.verify({ token, digits })],
+    ["compare", (totp, digits) => totp.compare({ token, digits })],
+    ["equals", (totp, digits) => totp.equals({ token, digits })],
+  ])("%s rejects invalid digits", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    // Per call.
+    await expect(call(totp, 0)).rejects.toThrow(/Invalid digits: 0/);
+    await expect(call(totp, 6.5)).rejects.toThrow(/Invalid digits: 6\.5/);
+    // Set on the instance after construction.
+    totp.digits = -1;
+    await expect(call(totp)).rejects.toThrow(/Invalid digits: -1/);
+  });
+
+  test("verify rejects invalid digits when afterTimeStep excludes every step", async () => {
+    const totp = new TOTP({ secret: secretKey, duration });
+    await expect(
+      totp.verify({ token, timestamp, digits: 0, afterTimeStep: 1000 }),
+    ).rejects.toThrow(/Invalid digits: 0/);
+  });
+});
+
+describe("token format", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+  // RFC 6238: at 59s the 8-digit SHA-1 token is "94287082".
+  const timestamp = 59_000;
+
+  test.each<[string, unknown]>([
+    ["with a space", "9428 7082"],
+    ["with a dash", "9428-7082"],
+    ["with a trailing newline", "94287082\n"],
+    ["with a letter", "9428708A"],
+    ["cut short", "9428708"],
+    ["with an extra digit", "942870820"],
+    ["passed as a number", 94287082],
+    ["that is empty", ""],
+    ["that is undefined", undefined],
+    ["that is null", null],
+  ])("a token %s is never valid", async (_name, malformed) => {
+    const token = malformed as string;
+    expect(await totp.validate({ token, timestamp })).toBe(false);
+    expect(await totp.verify({ token, timestamp })).toEqual({ valid: false });
+    expect(await totp.compare({ token, timestamp })).toBe(null);
+    expect(await totp.equals({ token, timestamp })).toBe(false);
+  });
+
+  test("a token must be exactly as long as digits", async () => {
+    expect(await totp.validate({ token: "94287082", timestamp })).toBe(true);
+    expect(await totp.validate({ token: "287082", timestamp })).toBe(false);
+    expect(await totp.validate({ token: "287082", timestamp, digits: 6 })).toBe(
+      true,
+    );
+    expect(
+      await totp.validate({ token: "94287082", timestamp, digits: 6 }),
+    ).toBe(false);
+  });
+
+  test("a malformed token is rejected without computing any HMAC", async () => {
+    const sign = jest.spyOn(globalThis.crypto.subtle, "sign");
+    try {
+      expect(
+        await totp.validate({ token: "9428 7082", timestamp, window: 100 }),
+      ).toBe(false);
+      expect(
+        await totp.verify({ token: "9428 7082", timestamp, window: 100 }),
+      ).toEqual({ valid: false });
+      expect(sign).not.toHaveBeenCalled();
+    } finally {
+      sign.mockRestore();
+    }
+  });
+});
+
+describe("duration", () => {
+  const secretKey = Secret.from(secret.sha1, "ascii");
+  const timestamp = 59_000;
+
+  test("accepts a fractional duration above 0", async () => {
+    const totp = new TOTP({ secret: secretKey, duration: 0.5 });
+    const token = await totp.generate({ timestamp });
+    expect(token).toEqual(expect.any(String));
+    expect(await totp.validate({ token, timestamp })).toBe(true);
+  });
+
+  test.each([0, -1, NaN, Infinity, -Infinity, "30"])(
+    "the constructor rejects a duration of %p",
+    (duration) => {
+      expect(() => new TOTP({ duration: duration as number })).toThrow(
+        /Invalid duration: .* Must be a finite number greater than 0/,
+      );
+      expect(() => TOTP.create({ duration: duration as number })).toThrow(
+        /Invalid duration: /,
+      );
+    },
+  );
+
+  test.each<[string, (totp: TOTP, duration?: number) => unknown]>([
+    ["generate", (totp, duration) => totp.generate({ timestamp, duration })],
+    [
+      "validate",
+      (totp, duration) =>
+        totp.validate({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "verify",
+      (totp, duration) =>
+        totp.verify({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "compare",
+      (totp, duration) =>
+        totp.compare({ token: "00000000", timestamp, duration }),
+    ],
+    [
+      "equals",
+      (totp, duration) =>
+        totp.equals({ token: "00000000", timestamp, duration }),
+    ],
+    ["timeUsed", (totp, duration) => totp.timeUsed({ timestamp, duration })],
+    [
+      "timeRemaining",
+      (totp, duration) => totp.timeRemaining({ timestamp, duration }),
+    ],
+    ["toKeyUri", (totp, duration) => totp.toKeyUri({ duration })],
+  ])("%s rejects an invalid duration", async (_name, call) => {
+    const totp = new TOTP({ secret: secretKey, digits: 8, duration });
+    // Wrap so both sync throws (timeUsed) and async rejects (generate) work.
+    const run = (duration?: number) =>
+      Promise.resolve().then(() => call(totp, duration));
+    // Per call.
+    await expect(run(0)).rejects.toThrow(/Invalid duration: 0/);
+    await expect(run(NaN)).rejects.toThrow(/Invalid duration: NaN/);
+    // Set on the instance after construction.
+    totp.duration = 0;
+    await expect(run()).rejects.toThrow(/Invalid duration: 0/);
   });
 });
 
