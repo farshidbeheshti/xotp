@@ -50,6 +50,7 @@
 
 - [Enrollment](#enrollment-bound-instance)
 - [Usage](#usage)
+- [Guardrails](#guardrails)
 - [Key URI & QR codes](#key-uri--qr-code-generation)
 
 **API reference**
@@ -247,6 +248,24 @@ XOTP keeps no state, so the protection only works if you store `timeStep` after 
 
 `verify()` takes the same options as `validate()`. Without `afterTimeStep` it accepts the same tokens as `validate()`; `delta` is the same value `compare()` returns. An `afterTimeStep` that is not an integer throws a `TypeError`.
 
+## Guardrails
+
+XOTP rejects configuration and input that would otherwise fail silently or hang. These checks run in the constructor and again on each call, so a bad value assigned to an instance property later is still caught.
+
+| Check | Rule | On failure |
+| ----- | ---- | ---------- |
+| Secret | Must not be empty (including whitespace-only or padding-only Base32). There is no minimum length. | Throws `TypeError` |
+| Window | Integer from `0` to `100` steps per direction (`number` or each side of `{ backward, forward }`). Strings such as `"1"` are rejected. | Throws `TypeError` |
+| Digits | Positive integer (no upper limit). | Throws `TypeError` |
+| Duration (TOTP) | Finite number greater than `0`. Fractional values are allowed. | Throws `TypeError` |
+| Token | String of exactly `digits` ASCII `0`–`9` characters. Numbers, spaces, dashes, and wrong lengths are not valid. | `validate` / `equals` → `false`; `compare` → `null`; `verify` → `{ valid: false }` |
+
+An empty string secret is never ignored: `secret: ""` on a bound instance throws instead of falling back to the instance secret, and `TOTP.create({ secret: "" })` / `HOTP.create({ secret: "" })` throw instead of generating a new one. Omit the option when you mean “use the instance secret” or “generate one.”
+
+Values from environment variables are strings — convert them yourself (`Number(process.env.OTP_DURATION)`), so a missing or mistyped env var surfaces as an error instead of being coerced.
+
+`URI.parse` still accepts only `digits` of `6` or `8` (Key URI convention). Instance `digits` may be any positive integer.
+
 ## Key URI & QR Code Generation
 
 ### Export (generate a key URI)
@@ -428,6 +447,8 @@ You can also use `from` static method to get a `Secret` instance from a string i
 const secret = Secret.from("LBHVIUBAFBKE6VCQF5EE6VCQFE======", "base32");
 ```
 
+An empty secret (including `""`, whitespace-only Base32, or an empty `Uint8Array`) throws a `TypeError`. There is no minimum length beyond that.
+
 Almost all applications need to store the secret key to generate and verify the user's token later. To do this, use the `toString` method to get the secret key in one of the [available encodings](#supported-encodings):
 
 ```typescript
@@ -453,12 +474,12 @@ The default encoding for `toString()` is `base32` because most authentication ap
 | Option    | Type     | Default | Description                                                                                                                                                                         |
 | --------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | algorithm | `string` | "sha1"  | The algorithm used for calculating the HMAC, see [supported algorithms](#supported-algorithms)!                                                                                     |
-| digits    | `number` | 6       | The length of the OTP token.                                                                                                                                                        |
-| window    | `number` or `{ backward, forward }` | 1       | The number of window(s) within which to validate the token. If the token isn't validated in the current time step, XOTP attempts to validate it in the previous and future windows. A number applies to both directions; use `{ backward, forward }` to set each one separately. |
-| duration  | `number` | 30      | The duration (in seconds) for which a token is valid.                                                                                                                               |
+| digits    | `number` | 6       | Length of the OTP token. Must be a positive integer; see [Guardrails](#guardrails).                                                                                                  |
+| window    | `number` or `{ backward, forward }` | 1       | Time steps to search around the current one. A number applies to both directions; use `{ backward, forward }` for each side. Each side must be an integer from `0` to `100`; see [Guardrails](#guardrails). |
+| duration  | `number` | 30      | Seconds a token stays valid for its time step. Must be a finite number greater than `0`; see [Guardrails](#guardrails).                                                              |
 | issuer    | `string` | "xotp"  | The provider or service associated with the token (e.g., "Github"). This is just a display field to display the issuer's name in authenticator apps like Google Authenticator.      |
 | account         | `string`  |         | The account associated with the token (e.g., the user's email). This is also a display field to display the account name in authenticator apps like Google Authenticator.           |
-| secret          | `Secret` or `string` |         | Binds a secret to the instance. A string is decoded as Base32. When set, `generate`, `validate`, and related methods can omit `secret` in each call.                                  |
+| secret          | `Secret` or `string` |         | Binds a secret to the instance. A string is decoded as Base32 and must not be empty. When set, methods can omit `secret` per call.                                                    |
 | generateSecret  | `boolean` | `false` | Set to `true` when enrolling new 2FA (no `secret` yet) so one random secret is created at construction — use `TOTP.create()` or persist `instance.secret`. Keep `false` (default) for server validators that pass each user's `secret` per call. |
 
 ### HOTP
@@ -501,12 +522,12 @@ const hotp = new HOTP({ window: { backward: 1, forward: 2 } });
 | Option         | Type      | Default | Description                                                                                                                                                                         |
 | -------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | algorithm      | `string`  | "sha1"  | HMAC algorithm; see [supported algorithms](#supported-algorithms).                                                                                                                  |
-| digits         | `number`  | 6       | Token length (6 or 8).                                                                                                                                                              |
-| window         | `number` or `{ backward, forward }` | 1       | Counter values after the expected counter to accept during validation. A number only looks ahead; use `{ backward, forward }` to also accept earlier counters (see [HOTP window](#hotp-window)). |
+| digits         | `number`  | 6       | Token length. Must be a positive integer; see [Guardrails](#guardrails).                                                                                                             |
+| window         | `number` or `{ backward, forward }` | 1       | Counters after the expected one to accept. A number only looks ahead; use `{ backward, forward }` for earlier counters too (see [HOTP window](#hotp-window)). Each side must be an integer from `0` to `100`. |
 | counter        | `number`  | 0       | Current counter value. Required in HOTP key URIs.                                                                                                                                   |
 | issuer         | `string`  | "xotp"  | Display label for the service name in authenticator apps.                                                                                                                           |
 | account        | `string`  |         | Display label for the user (e.g. email).                                                                                                                                            |
-| secret         | `Secret` or `string` |         | Binds a secret to the instance so methods can omit `secret` per call. A string is decoded as Base32.                                                                     |
+| secret         | `Secret` or `string` |         | Binds a secret to the instance so methods can omit `secret` per call. A string is decoded as Base32 and must not be empty.                                               |
 | generateSecret | `boolean` | `false` | Set to `true` for enrollment, or use `HOTP.create()`. Keep `false` for shared server validators.                                                                                  |
 
 <a id="supported_encodings"></a>
@@ -572,6 +593,9 @@ v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` modul
 - **Secrets use `Uint8Array` instead of `Buffer`.** `Secret.from(bytes)` and `new Secret({ data })` accept a `Uint8Array`; `secret.buffer` returns a `Uint8Array`. A Node `Buffer` still works anywhere a `Uint8Array` is expected.
 - **The HOTP window only looks ahead.** A numeric `window` on `HOTP` no longer accepts counters below the one you pass, so a used token is rejected after the counter advances. To keep the v1 behaviour, pass `window: { backward: n, forward: n }`. The TOTP window is unchanged.
 - **`window` is typed `OTPWindow`, not `number`.** The `window` option and the `window` property on `TOTP` and `HOTP` instances are now `number | { backward, forward }`. Code that reads `totp.window` or `hotp.window` into a `number` needs to handle the object form.
+- **Empty secrets throw.** `Secret.from("")`, an empty `Uint8Array`, and `secret: ""` on a method or constructor throw a `TypeError`. An empty string no longer falls back to a bound instance secret or triggers secret generation in `create()`.
+- **Window, digits, and duration are validated.** A window outside `0`–`100` steps per direction, non-positive or non-integer `digits`, or a TOTP `duration` that is not a finite number greater than `0` throws a `TypeError`. String values such as `"30"` are not coerced — convert env vars with `Number(...)` first. See [Guardrails](#guardrails).
+- **Tokens must be digit strings of the configured length.** A number, spaces, dashes, or the wrong length makes `validate` return `false` (and the same for `equals` / `compare` / `verify`). Leading zeros are preserved only when you pass a string.
 - **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).
 - **Runtime requirement:** Node.js **20+** (for global `crypto`), or any browser/edge runtime with the Web Crypto API. Bun and Deno are supported.
 
