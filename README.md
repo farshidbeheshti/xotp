@@ -258,7 +258,7 @@ XOTP rejects configuration and input that would otherwise fail silently or hang.
 | Window | Integer from `0` to `100` steps per direction (`number` or each side of `{ backward, forward }`). Strings such as `"1"` are rejected. | Throws `TypeError` |
 | Digits | Positive integer (no upper limit). | Throws `TypeError` |
 | Duration (TOTP) | Finite number greater than `0`. Fractional values are allowed. | Throws `TypeError` |
-| Token | String of exactly `digits` ASCII `0`–`9` characters. Numbers, spaces, dashes, and wrong lengths are not valid. | `validate` / `equals` → `false`; `compare` → `null`; `verify` → `{ valid: false }` |
+| Token | After stripping spaces and dashes, must be exactly `digits` ASCII `0`–`9` characters. Non-negative safe integers are accepted and zero-padded to `digits`. Letters, wrong lengths, and other types are not valid. | `validate` / `equals` → `false`; `compare` → `null`; `verify` → `{ valid: false }` |
 
 An empty string secret is never ignored: `secret: ""` on a bound instance throws instead of falling back to the instance secret, and `TOTP.create({ secret: "" })` / `HOTP.create({ secret: "" })` throw instead of generating a new one. Omit the option when you mean “use the instance secret” or “generate one.”
 
@@ -595,7 +595,7 @@ v2 makes XOTP universal (browser + edge) by switching from Node's `crypto` modul
 - **`window` is typed `OTPWindow`, not `number`.** The `window` option and the `window` property on `TOTP` and `HOTP` instances are now `number | { backward, forward }`. Code that reads `totp.window` or `hotp.window` into a `number` needs to handle the object form.
 - **Empty secrets throw.** `Secret.from("")`, an empty `Uint8Array`, and `secret: ""` on a method or constructor throw a `TypeError`. An empty string no longer falls back to a bound instance secret or triggers secret generation in `create()`.
 - **Window, digits, and duration are validated.** A window outside `0`–`100` steps per direction, non-positive or non-integer `digits`, or a TOTP `duration` that is not a finite number greater than `0` throws a `TypeError`. String values such as `"30"` are not coerced — convert env vars with `Number(...)` first. See [Guardrails](#guardrails).
-- **Tokens must be digit strings of the configured length.** A number, spaces, dashes, or the wrong length makes `validate` return `false` (and the same for `equals` / `compare` / `verify`). Leading zeros are preserved only when you pass a string.
+- **Tokens are normalized before comparison.** Spaces and dashes are stripped (`"123 456"` / `"123-456"`), and a non-negative safe integer is accepted and zero-padded to `digits`. Letters, the wrong length after normalization, or other types still make `validate` return `false` (and the same for `equals` / `compare` / `verify`).
 - **Algorithms are limited to `sha1`, `sha256`, `sha384`, `sha512`** — the set supported by Web Crypto HMAC (and the only ones used by authenticator apps).
 - **Runtime requirement:** Node.js **20+** (for global `crypto`), or any browser/edge runtime with the Web Crypto API. Bun and Deno are supported.
 

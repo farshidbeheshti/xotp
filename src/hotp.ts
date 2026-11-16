@@ -9,7 +9,7 @@ import { encodeBytes, uintEncode } from "./encoding/index.js";
 import { padStart } from "./utils.js";
 import { Secret } from "./secret.js";
 import { assertDigits } from "./shared/assertDigits.js";
-import { isWellFormedToken } from "./shared/isWellFormedToken.js";
+import { normalizeToken } from "./shared/normalizeToken.js";
 import { resolveSecret, toSecret } from "./shared/resolveSecret.js";
 import { resolveWindow } from "./shared/resolveWindow.js";
 import { hotpDefaults } from "./shared/hotpDefaults.js";
@@ -111,7 +111,7 @@ class HOTP {
     digits = this.digits,
     window = this.window,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     counter?: number;
     algorithm?: Algorithm;
@@ -139,7 +139,7 @@ class HOTP {
     algorithm = this.algorithm,
     window = this.window,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     counter?: number;
     digits?: number;
@@ -186,7 +186,7 @@ class HOTP {
     algorithm = this.algorithm,
     digits = this.digits,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     counter?: number;
     algorithm?: Algorithm;
@@ -195,16 +195,21 @@ class HOTP {
     const resolved = resolveSecret(this.#secret, secret);
     // Checked before the token, so invalid digits throw even for a bad token.
     assertDigits(digits);
-    // The token is end-user input: a malformed one is a wrong token, not an
-    // error, and it can never match, so there is no HMAC to compute.
-    if (!isWellFormedToken(token, digits)) return false;
+    // Spaces, dashes, and numbers are normalized first. Anything that still
+    // cannot be a digit string of length `digits` is a wrong token, not an
+    // error, and there is no HMAC to compute.
+    const normalized = normalizeToken(token, digits);
+    if (normalized == null) return false;
     const generatedToken = await this.generate({
       secret: resolved,
       counter,
       algorithm,
       digits,
     });
-    return timingSafeEqual(encodeBytes(token), encodeBytes(generatedToken));
+    return timingSafeEqual(
+      encodeBytes(normalized),
+      encodeBytes(generatedToken),
+    );
   }
 
   toKeyUri({

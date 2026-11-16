@@ -338,14 +338,21 @@ describe("token format", () => {
   const hotp = new HOTP({ secret: secretKey });
 
   // "755224" is the RFC 4226 token for counter 0.
-  test.each<[string, unknown]>([
+  test.each<[string, string | number]>([
     ["with a space", "755 224"],
     ["with a dash", "755-224"],
     ["with a trailing newline", "755224\n"],
+    ["passed as a number", 755224],
+  ])("accepts a token %s", async (_name, token) => {
+    expect(await hotp.validate({ token, counter: 0 })).toBe(true);
+    expect(await hotp.compare({ token, counter: 0 })).toBe(0);
+    expect(await hotp.equals({ token, counter: 0 })).toBe(true);
+  });
+
+  test.each<[string, unknown]>([
     ["with a letter", "75522A"],
     ["cut short", "75522"],
     ["with an extra digit", "7552240"],
-    ["passed as a number", 755224],
     ["that is empty", ""],
     ["that is undefined", undefined],
     ["that is null", null],
@@ -372,7 +379,7 @@ describe("token format", () => {
     const sign = jest.spyOn(globalThis.crypto.subtle, "sign");
     try {
       expect(
-        await hotp.validate({ token: "755 224", counter: 0, window: 100 }),
+        await hotp.validate({ token: "75522A", counter: 0, window: 100 }),
       ).toBe(false);
       expect(sign).not.toHaveBeenCalled();
       // A well-formed wrong token does search the window.
