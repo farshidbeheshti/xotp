@@ -80,7 +80,7 @@ class HOTP {
 
   async generate({
     secret,
-    counter = ++this.counter,
+    counter = this.counter++,
     algorithm = this.algorithm,
     digits = this.digits,
   }: {
