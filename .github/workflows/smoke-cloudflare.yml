@@ -1,0 +1,13 @@
+name: Smoke Cloudflare
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      runtime: cloudflare
+      command: npm run test:smoke:cloudflare

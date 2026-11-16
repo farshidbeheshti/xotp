@@ -1,0 +1,13 @@
+name: Smoke Bun
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      runtime: bun
+      command: bun tests/smoke/cjs.cjs && bun tests/smoke/esm.mjs

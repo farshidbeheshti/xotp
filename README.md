@@ -10,16 +10,17 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/xotp"><img src="https://img.shields.io/npm/v/xotp" alt="npm version" /></a>
-  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/ci.yml?branch=main&label=CI&logo=github" alt="CI" /></a>
   <a href="https://codecov.io/gh/farshidbeheshti/xotp"><img src="https://codecov.io/gh/farshidbeheshti/xotp/graph/badge.svg" alt="codecov" /></a>
-  <a href="https://github.com/farshidbeheshti/xotp/blob/master/LICENSE"><img src="https://img.shields.io/github/license/farshidbeheshti/xotp" alt="License: MIT" /></a>
-  <a href="https://github.com/farshidbeheshti/xotp"><img src="https://img.shields.io/badge/TypeScript-3178C9?logo=TypeScript&logoColor=white" alt="TypeScript" /></a>
-  <a href="https://xotp.dev"><img src="https://img.shields.io/badge/demo-xotp.dev-026dfd" alt="demo" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/farshidbeheshti/xotp" alt="License: MIT" /></a>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/xotp"><img src="https://img.shields.io/npm/dm/xotp" alt="npm downloads" /></a>
-  <a href="#installation"><img src="https://img.shields.io/badge/runtimes-Node%20%7C%20Bun%20%7C%20Deno%20%7C%20Browser%20%7C%20Edge-blue" alt="runtimes" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-node.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/smoke-node.yml?branch=main&label=Node&logo=nodedotjs&logoColor=white&labelColor=339933" alt="Node" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-bun.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/smoke-bun.yml?branch=main&label=Bun&logo=bun&logoColor=white&labelColor=000000" alt="Bun" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-deno.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/smoke-deno.yml?branch=main&label=Deno&logo=deno&logoColor=white&labelColor=000000" alt="Deno" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-cloudflare.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/smoke-cloudflare.yml?branch=main&label=Cloudflare&logo=cloudflare&logoColor=white&labelColor=F38020" alt="Cloudflare" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-vercel-edge.yml"><img src="https://img.shields.io/github/actions/workflow/status/farshidbeheshti/xotp/smoke-vercel-edge.yml?branch=main&label=Vercel%20Edge&logo=vercel&logoColor=white&labelColor=000000" alt="Vercel Edge" /></a>
 </p>
 
 <p align="center">
