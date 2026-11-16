@@ -44,6 +44,12 @@ describe("instance secret", () => {
     expect(await hotp.generate({ counter })).toBe(expected);
   });
 
+  test("bound instance's first auto-generated token is for counter 0", async () => {
+    const hotp = new HOTP({ secret: Secret.from(secret, "ascii") });
+    expect(await hotp.generate()).toBe(data[0].hotp);
+    expect(hotp.counter).toBe(1);
+  });
+
   test("accepts a base32 string secret in the constructor", async () => {
     const base32 = Secret.from(secret, "ascii").toString();
     const hotp = new HOTP({ secret: base32 });
