@@ -45,6 +45,9 @@ jobs:
           - runtime: deno
             format: esm
             command: deno run --allow-read tests/smoke/esm.mjs
+          - runtime: cloudflare
+            format: esm
+            command: npm run test:smoke:cloudflare
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
