@@ -777,14 +777,24 @@ describe("token format", () => {
   // RFC 6238: at 59s the 8-digit SHA-1 token is "94287082".
   const timestamp = 59_000;
 
-  test.each<[string, unknown]>([
+  test.each<[string, string | number]>([
     ["with a space", "9428 7082"],
     ["with a dash", "9428-7082"],
     ["with a trailing newline", "94287082\n"],
+    ["passed as a number", 94287082],
+  ])("accepts a token %s", async (_name, token) => {
+    expect(await totp.validate({ token, timestamp })).toBe(true);
+    expect(await totp.verify({ token, timestamp })).toMatchObject({
+      valid: true,
+    });
+    expect(await totp.compare({ token, timestamp })).toBe(0);
+    expect(await totp.equals({ token, timestamp })).toBe(true);
+  });
+
+  test.each<[string, unknown]>([
     ["with a letter", "9428708A"],
     ["cut short", "9428708"],
     ["with an extra digit", "942870820"],
-    ["passed as a number", 94287082],
     ["that is empty", ""],
     ["that is undefined", undefined],
     ["that is null", null],
@@ -811,10 +821,10 @@ describe("token format", () => {
     const sign = jest.spyOn(globalThis.crypto.subtle, "sign");
     try {
       expect(
-        await totp.validate({ token: "9428 7082", timestamp, window: 100 }),
+        await totp.validate({ token: "9428708A", timestamp, window: 100 }),
       ).toBe(false);
       expect(
-        await totp.verify({ token: "9428 7082", timestamp, window: 100 }),
+        await totp.verify({ token: "9428708A", timestamp, window: 100 }),
       ).toEqual({ valid: false });
       expect(sign).not.toHaveBeenCalled();
     } finally {

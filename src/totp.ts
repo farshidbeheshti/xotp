@@ -113,7 +113,7 @@ class TOTP {
     duration = this.duration,
     window = this.window,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
@@ -142,7 +142,7 @@ class TOTP {
     window = this.window,
     afterTimeStep,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
@@ -198,7 +198,7 @@ class TOTP {
     duration = this.duration,
     window = this.window,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
@@ -225,7 +225,7 @@ class TOTP {
     digits = this.digits,
     duration = this.duration,
   }: {
-    token: string;
+    token: string | number;
     secret?: SecretInput;
     timestamp?: number;
     algorithm?: Algorithm;
