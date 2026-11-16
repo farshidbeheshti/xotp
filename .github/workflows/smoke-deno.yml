@@ -1,0 +1,13 @@
+name: Smoke Deno
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      runtime: deno
+      command: deno run --allow-read tests/smoke/esm.mjs

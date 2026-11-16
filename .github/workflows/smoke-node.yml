@@ -1,0 +1,13 @@
+name: Smoke Node
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      runtime: node
+      command: node tests/smoke/cjs.cjs && node tests/smoke/esm.mjs
