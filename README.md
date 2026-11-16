@@ -23,6 +23,7 @@
   <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-bun.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-bun.yml/badge.svg" alt="Bun" /></a>
   <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-deno.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-deno.yml/badge.svg" alt="Deno" /></a>
   <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-cloudflare.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-cloudflare.yml/badge.svg" alt="Cloudflare" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-vercel-edge.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-vercel-edge.yml/badge.svg" alt="Vercel Edge" /></a>
 </p>
 
 <p align="center">

@@ -1,0 +1,13 @@
+name: Smoke Vercel Edge
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      runtime: vercel-edge
+      command: npm run test:smoke:vercel-edge
