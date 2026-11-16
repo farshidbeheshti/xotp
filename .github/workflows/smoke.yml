@@ -1,0 +1,40 @@
+name: Smoke
+
+on:
+  workflow_call:
+    inputs:
+      runtime:
+        description: Runtime label (node, bun, deno, cloudflare)
+        required: true
+        type: string
+      command:
+        description: Shell command to run after build
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      runtime:
+        description: Runtime label (node, bun, deno, cloudflare)
+        required: true
+        type: string
+      command:
+        description: Shell command to run after build
+        required: true
+        type: string
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+        if: inputs.runtime == 'bun'
+      - uses: denoland/setup-deno@v2
+        if: inputs.runtime == 'deno'
+      - run: npm ci
+      - run: npm run build
+      - run: ${{ inputs.command }}

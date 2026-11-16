@@ -19,7 +19,10 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/xotp"><img src="https://img.shields.io/npm/dm/xotp" alt="npm downloads" /></a>
-  <a href="#installation"><img src="https://img.shields.io/badge/runtimes-Node%20%7C%20Bun%20%7C%20Deno%20%7C%20Browser%20%7C%20Edge-blue" alt="runtimes" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-node.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-node.yml/badge.svg" alt="Node" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-bun.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-bun.yml/badge.svg" alt="Bun" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-deno.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-deno.yml/badge.svg" alt="Deno" /></a>
+  <a href="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-cloudflare.yml"><img src="https://github.com/farshidbeheshti/xotp/actions/workflows/smoke-cloudflare.yml/badge.svg" alt="Cloudflare" /></a>
 </p>
 
 <p align="center">
