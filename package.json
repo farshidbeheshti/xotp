@@ -2,7 +2,7 @@
   "name": "xotp",
   "description": "One-Time Password (HOTP/TOTP) library for Node.js, Deno and Bun, with support for Google Authenticator.",
   "author": "Farshid Beheshti",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/cjs/index.js",
